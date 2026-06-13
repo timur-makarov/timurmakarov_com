@@ -1,0 +1,12 @@
+baseURL = 'https://timurmakarov.com/'
+locale = 'en-us'
+title = "Timur Makarov | Blockchain Software Engineer"
+disableKinds = ['sitemap']
+
+[params]
+    author = "Timur Makarov"
+    description = "Compilation of Knowledge on the topics of blockchain, DeFi and ZK"
+
+[caches]
+  [caches.images]
+    dir = ':cacheDir/images'

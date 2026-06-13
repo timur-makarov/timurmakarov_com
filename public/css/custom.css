@@ -1,0 +1,32 @@
+.collapsible-code {
+    position: relative;
+}
+
+.collapsible-code .code-block-content {
+    max-height: 350px;
+    overflow: hidden;
+    position: relative;
+    transition: max-height 0.3s ease-in-out;
+}
+
+.collapsible-code.expanded .code-block-content {
+    max-height: none;
+}
+
+.show-more-btn {
+    width: 100%;
+    padding: 8px;
+    background: #4a4949;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border-radius: 0 0 4px 4px;
+    display: none;
+}
+
+.show-more-btn:hover {
+    background: #3d3d3d;
+}

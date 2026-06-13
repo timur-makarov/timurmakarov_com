@@ -1,0 +1,1191 @@
++++
+date = '2024-08-01T08:00:00+04:00'
+draft = false
+title = 'Bitcoin'
+description = "Compilation of knowledge about Bitcoin Protocol. BIPs, scripting language, consensus and more"
++++
+
+This article includes most of the information about Bitcoin. Rules, updates, features, Script language - everything you will encounter if you wish to more seriously engage with the Bitcoin network. Digging deeper would be reading the code and BIPs itself.
+
+This article describes a slightly older version of Bitcoin to help you see a bit bigger picture. Knowledge of  (e.g. SegWit, Taproot) can be easily laid on top of the knowledge in this article.
+
+-  What Is Bitcoin
+-  How Bitcoin Works
+-  Wallet, Address and The Keys
+-  Transactions and Scripting
+-  Network and Blockchain
+-  Mining and Consensus
+
+## What Is Bitcoin
+
+Bitcoin is a collection of concepts and technologies that form the basis of a digital money ecosystem.  Units of currency called bitcoin are used to store and transmit value among participants in the bitcoin network.  Bitcoin users communicate with each other using the bitcoin protocol primarily via the internet, although other transport networks can also be used. The bitcoin protocol stack, available as open source software, can be run on a wide range of computing devices, including laptops and smartphones, making the technology easily accessible.
+
+Users can transfer bitcoin over the network to do just about anything that can be done with conventional currencies, including buy and sell goods, send money to people or organizations, or extend credit. Bitcoin can be purchased, sold, and exchanged for other currencies at specialized currency exchanges. Bitcoin in a sense is the perfect form of money for the internet because it is fast, secure, and borderless.
+
+Unlike traditional currencies, bitcoin is entirely virtual. There are no physical coins or even digital coins per se. The coins are implied in transactions that transfer value from sender to recipient. Users of bitcoin own keys that allow them to prove ownership of bitcoin in the bitcoin network. With these keys they can sign transactions to unlock the value and spend it by transferring it to a new owner. Keys are often stored in a digital wallet on each user’s computer or smartphone. Possession of the key that can sign a transaction is the only prerequisite to spending bitcoin, putting the control entirely in the hands of each user.
+
+Bitcoin is a distributed, peer-to-peer system. As such there is no “central” server or point of control. Bitcoin are created through a process called “mining,” which involves competing to find solutions to a mathematical problem while processing bitcoin transactions. Any participant in the bitcoin network (i.e., anyone using a device running the full bitcoin protocol stack) may operate as a miner, using their computer’s processing power to verify and record transactions. Every 10 minutes, on average, someone is able to validate the transactions of the past 10 minutes and is rewarded with brand new bitcoin. Essentially, bitcoin mining decentralizes the currency-issuance and clearing functions of a central bank and replaces the need for any central bank.
+
+The bitcoin protocol includes built-in algorithms that regulate the mining function across the network.  The difficulty of the processing task that miners must perform is adjusted dynamically so that, on average, someone succeeds every 10 minutes regardless of how many miners (and how much processing) are competing at any moment.  The protocol also halves the rate at which new bitcoin are created every 4 years, and limits the total number of bitcoin that will be created to a fixed total just below 21 million coins. The result is that the number of bitcoin in circulation closely follows an easily predictable curve that approaches 21 million by the year 2140.  Due to bitcoin’s diminishing rate of issuance, over the long term, the bitcoin currency is deflationary. Furthermore, bitcoin cannot be inflated by “printing” new money above and beyond the expected issuance rate.
+
+Behind the scenes, bitcoin is also the name of the protocol, a peer-to-peer network, and a distributed computing innovation. The bitcoin currency is really only the first application of this invention. Bitcoin represents the culmination of decades of research in cryptography and distributed systems and includes four key innovations brought together in a unique and powerful combination. Bitcoin consists of:
+
+- A decentralized peer-to-peer network (the bitcoin protocol).
+- A public transaction ledger (the blockchain). 
+- A set of rules for independent transaction validation and currency issuance (consensus rules).
+- A mechanism for reaching global decentralized consensus on the valid blockchain (Proof-of-Work algorithm).
+
+## How Bitcoin Works
+
+**Bitcoin Transactions**
+In simple terms, a transaction tells the network that the owner of some bitcoin value has authorized the transfer of that value to another owner. The new owner can now spend the bitcoin by creating another transaction that authorizes transfer to another owner, and so on, in a chain of ownership.
+
+In the case of Bitcoin transactions they work similar to traditional cash. Imagine you have banknotes of different nominations and you want to give your friend $135 - you give a $100 and a $50 and you get a $10 and $5 back. It's the same in Bitcoin - you take outputs from previous transactions and put them as inputs in a new one. If in previous transactions someone sent to you 1 and then 0.5 bitcoin, you would have 2 outputs to your address. Now you can use those outputs to sent someone else, for example, 1.2 bitcoin - you take output with 1 and output with 0.5 bitcoin as inputs and create 2 outputs, with 1.2 to that someone and 0.3 bitcoin back to you as "change". But, outputs add up to slightly less than inputs and the difference represents an implied transaction fee, which is a small payment collected by the miner who includes the transaction in the ledger. So, the value of outputs will be something like 1.195 and 0.297 or 1.2 and 0.292, it's for you wallet to decide. More on fees and transactions 
+
+The transaction also contains proof of ownership for each amount of bitcoin (each input) whose value is being spent (output is "spent" when it's used as an input), in the form of a digital signature from the owner, which can be independently validated by anyone. In bitcoin terms, “spending” is signing a transaction that transfers value from a previous transaction over to a new owner identified by a bitcoin address.
+
+Different wallets may use different strategies when aggregating inputs to make a payment requested by the user. They might aggregate many small inputs, or use one that is equal to or larger than the desired payment. Unless the wallet can aggregate inputs in such a way to exactly match the desired payment plus transaction fees, the wallet will need to generate some change. This is very similar to how people handle cash. If you always use the largest bill in your pocket, you will end up with a pocket full of loose change. If you only use the loose change, you’ll always have only big bills. People subconsciously find a balance between these two extremes, and bitcoin wallet developers strive to program this balance.
+
+In summary, transactions move value from transaction inputs to transaction outputs. An input is a reference to a previous transaction’s output, showing where the value is coming from. A transaction output directs a specific value to a new owner’s bitcoin address and can include a "change" output back to the original owner. Outputs from one transaction can be used as inputs in a new transaction, thus creating a chain of ownership as the value is moved from owner to owner.
+
+A transaction output is created in the form of a script that creates an encumbrance on the value and can only be redeemed by the introduction of a solution to the script. In simpler terms, your friend’s transaction output will contain a script that says something like, “This output is payable to whoever can present a signature from the key corresponding to <you> public address.” Because only you have the wallet with the keys corresponding to that address, only your wallet can present such a signature to redeem this output. Your friend will therefore “encumber” the output value with a demand for a signature from you.
+
+By the way, as you can see, this structure of a transaction allows you to create multiple outputs to multiple different addresses. So, you can create a transaction with a 1 bitcoin input and with 10 0.1 bitcoin outputs to, for example, 9 your friends and 1 to you as "change". You have to include fee (if you want your transaction to be processed), so, most often, your friends' outputs will be with value 0.1 bitcoin and your "change" will be 0.09 bitcoin. Although this transaction is big and, therefore, requires a big fee, it still cheaper than sending transactions to your friends one by one.
+
+A wallet application contains all the logic for selecting appropriate inputs and outputs to build a transaction to your specification. You only need to specify a destination and an amount, and the rest happens in the wallet application without you seeing the details. Importantly, a wallet application can construct transactions even if it is completely offline. Like writing a check at home and later sending it to the bank in an envelope, the transaction does not need to be constructed and signed while connected to the bitcoin network. So, technically, bitcoin payments easily can be added to Google play, for example.
+
+**Transmitting the transaction**
+Because the transaction contains all the information necessary to process, it does not matter how or where it is transmitted to the bitcoin network. The bitcoin network is a peer-to-peer network, with each bitcoin client participating by connecting to several other bitcoin clients. The purpose of the bitcoin network is to propagate transactions and blocks to all participants.
+
+Any system, such as a server, desktop application, or wallet, that participates in the bitcoin network by “speaking” the bitcoin protocol is called a bitcoin node. Your friend’s wallet application can send the new transaction to any bitcoin node it is connected to. Any bitcoin node that receives a valid transaction it has not seen before will immediately forward it to all other nodes to which it is connected, a propagation technique known as *flooding*. Thus, the transaction rapidly propagates out across the peer-to-peer network, reaching a large percentage of the nodes within a few seconds.
+
+> A common misconception about bitcoin transactions is that they must be “confirmed” by waiting 10 minutes for a new block, or up to 60 minutes for a full six confirmations. Although confirmations ensure the transaction has been accepted by the whole network, such a delay is unnecessary for small-value items such as a cup of coffee. A merchant may accept a valid small-value transaction with no confirmations, with no more risk than a credit card payment made without an ID or a signature, as merchants routinely accept today.
+
+**Bitcoin Mining**
+Your friend's transaction is now propagated on the bitcoin network. It does not become part of the blockchain until it is verified and included in a block by a process called mining.
+
+The bitcoin system of trust is based on computation. Transactions are bundled into blocks, which require an enormous amount of computation to prove, but only a small amount of computation to verify as proven. The mining process serves two purposes in bitcoin:
+
+- Mining nodes validate all transactions by reference to bitcoin’s consensus rules. Therefore, mining provides security for bitcoin transactions by rejecting invalid or malformed transactions.
+- Mining creates new bitcoin in each block, almost like a central bank printing new money. The amount of bitcoin created per block is limited and diminishes with time, following a fixed issuance schedule.
+
+Mining achieves a fine balance between cost and reward. Mining uses electricity to solve a mathematical problem. A successful miner will collect a reward in the form of new bitcoin and transaction fees. However, the reward will only be collected if the miner has correctly validated all the transactions, to the satisfaction of the rules of consensus. This delicate balance provides security for bitcoin without a central authority.
+
+A good way to describe mining is like a giant competitive game of sudoku that resets every time someone finds a solution and whose difficulty automatically adjusts so that it takes approximately 10 minutes to find a solution. Imagine a giant sudoku puzzle, several thousand rows and columns in size. If I show you a completed puzzle you can verify it quite quickly. However, if the puzzle has a few squares filled and the rest are empty, it takes a lot of work to solve! The difficulty of the sudoku can be adjusted by changing its size (more or fewer rows and columns), but it can still be verified quite easily even if it is very large. The “puzzle” used in bitcoin is based on a cryptographic hash and exhibits similar characteristics: it is asymmetrically hard to solve but easy to verify, and its difficulty can be adjusted.
+
+Finding such a solution, the so-called Proof-of-Work (PoW), requires quadrillions of hashing operations per second across the entire bitcoin network. The algorithm for Proof-of-Work involves repeatedly hashing the header of the block and a random number with the SHA256 cryptographic algorithm until a solution matching a predetermined pattern emerges. The first miner to find such a solution wins the round of competition and publishes that block into the blockchain.
+
+New transactions are constantly flowing into the network from user wallets and other applications. As these are seen by the bitcoin network nodes, they get added to a temporary pool of unverified transactions maintained by each node. As miners construct a new block, they add unverified transactions from this pool to the new block and then attempt to prove the validity of that new block, with the mining algorithm (Proof-of-Work).
+
+Transactions are added to the new block, prioritized by the highest-fee transactions first and a few other criteria. Each miner starts the process of mining a new block of transactions as soon as he receives the previous block from the network, knowing he has lost that previous round of competition. He immediately creates a new block, fills it with transactions and the fingerprint of the previous block, and starts calculating the Proof-of-Work for the new block. Each miner includes a special transaction in his block, one that pays his own bitcoin address the block reward (currently 3.125 bitcoin) plus the sum of transaction fees from all the transactions included in the block. If he finds a solution that makes that block valid, he “wins” this reward because his successful block is added to the global blockchain and the reward transaction he included becomes spendable.
+
+The block containing your friend’s transaction is counted as one “confirmation” of that transaction. When a new block is built on top of block that contained friend’s transaction, it added even more computation to the blockchain, thereby strengthening the trust in those transactions. Each block mined on top of the one containing the transaction counts as an additional confirmation for that transaction. As the blocks pile on top of each other, it becomes exponentially harder to reverse the transaction, thereby making it more and more trusted by the network. By convention, any block with more than six confirmations is considered irrevocable, because it would require an immense amount of computation to invalidate and recalculate six blocks.
+
+## Wallet, Address and 2 Keys
+
+Ownership of bitcoin is established through digital keys. The digital keys are not actually stored in the network, but are instead created and stored by users in a file, or simple database, called a wallet. The digital keys in a user’s wallet are completely independent of the bitcoin protocol and can be generated and managed by the user’s wallet software without reference to the blockchain or access to the internet. 
+
+A bitcoin wallet contains a collection of key pairs, each consisting of commonly called a private key and a public key. The private key (k) is a number, usually picked at random. From the private key, we use elliptic curve multiplication, a one-way cryptographic function, to generate a public key (K). From the public key (K), we use a one-way cryptographic hash function to generate a bitcoin address (A). You can think of the public key as similar to a bank account number and the private key as similar to the secret PIN that provides control over the account.
+
+![keychain.png](/images/keychain_2ab4615c6d.png)
+
+This mathematical relationship between the public and the private key that allows the private key to be used to generate signatures on messages. This signature can be validated against the public key without revealing the private key. When spending bitcoin, the current bitcoin owner presents her public key and a signature (different each time, but created from the same private key) in a transaction to spend those bitcoin. Through the presentation of the public key and signature, everyone in the bitcoin network can verify and accept the transaction as valid, confirming that the person transferring the bitcoin owned them at the time of the transfer.
+
+In a bitcoin transaction, the recipient’s public key is represented by its digital fingerprint, a bitcoin address, which is used in the same way as the beneficiary name on a check. In most cases, a bitcoin address is generated from and corresponds to a public key (more on that later). This way, bitcoin addresses abstract the recipient of funds, making transaction destinations flexible, similar to paper checks: a single payment instrument that can be used to pay into people’s accounts, pay into company accounts, pay for bills. The bitcoin address is the only representation of the keys that users will routinely see, because this is the part they need to share with the world.
+
+The bitcoin address is derived from the public key through the use of one-way cryptographic hashing. A “hashing algorithm” or simply “hash algorithm” is a one-way function that produces a fingerprint or “hash” of an arbitrary-sized input. To get bitcoin address, we need to take public key, compute the SHA256 hash and then compute the RIPEMD160 hash of the result, producing a 160-bit (20-byte) number (HASH160).
+
+In Bitcoin, whenever there is a need for a user to read and correctly transcribe a number, Base58Check is used to help human readability, avoid ambiguity, and protect against errors in address transcription and entry.
+
+Base58Check is a Base58 encoding format (user-friendly set of characters), frequently used in bitcoin, which has a built-in error-checking code. The checksum is an additional four bytes added to the end of the data that is being encoded. The checksum is derived from the hash of the encoded data and can therefore be used to detect and prevent transcription and typing errors. When presented with Base58Check code, the decoding software will calculate the checksum of the data and compare it to the checksum included in the code. If the two do not match, an error has been introduced and the Base58Check data is invalid. This prevents a mistyped bitcoin address from being accepted by the wallet software as a valid destination, an error that would otherwise result in loss of funds.
+
+To convert data (a number) into a Base58Check format, we first add a prefix to the data, called the “version byte,” which serves to easily identify the type of data that is encoded. For example, in the case of a bitcoin address the prefix is zero (0x00 in hex), whereas the prefix used when encoding a private key is 128 (0x80 in hex).
+
+```
+Examples:
+HASH160: **432f0f23897ae3c4433f828be2ef1ae6add38ab9**
+Base58Check: **178EeaZr7CcPJu1M7FkL5YZBimuVmNkfka**
+ ```
+
+```
+Private key (HEX): **6dd07a5da1ce1d931fb89155279aa4936c39f040318d37c1d618a0a2de70bf9f**Base58Check: **KzuB9BFEijPdNdrJu6wB8K9pZvWH9hpkifDhpu3zXjLFK4JnYaim**
+ ```
+
+![pubkey-to-address.png](/images/pubkey_to_address_f45484c32c.png)
+
+**Key Formats**
+Both private and public keys can be represented in a number of different formats. These representations all encode the same number, even though they look different. These formats are primarily used to make it easy for people to read and transcribe keys without introducing errors.
+
+**Private Key Formats**
+Different formats are used in different circumstances. Hexadecimal and raw binary formats are used internally in software and rarely shown to users. The WIF is used for import/export of keys between wallets and often used in QR code representations of private keys.
+
+Type - Prefix - Description:
+Raw - None - 32 bytes
+Hex - None - 64 hexadecimal digits
+WIF - 5 - Base58Check encoding with version prefix of 128
+WIF-compressed - K or L - As above, with added suffix 0x01 before encoding
+
+**Public Key Formats**
+The public key is a point on the elliptic curve consisting of a pair of coordinates (x,y). It is usually presented with the prefix 04 followed by two 256-bit numbers: one for the x coordinate of the point, the other for the y coordinate. The prefix 04 is used to distinguish uncompressed public keys from compressed public keys that begin with a 02 or a 03.
+
+```
+Example:
+x = F028892BAD7ED57D2FB57BF33081D5CFCF6F9ED3D3D7F159C2E2FFF579DC341
+y = 07CF33DA18BD734C600B96A72BBC4749D5141C90EC8AC328AE52DDFE2E505BDB
+K = 04F028892BAD7ED57D2FB57BF33081D5CFCF6F9ED3D3D7F159C2E2FFF579DC341A07CF33DA18BD734C600B96A72BBC4749D5141C90EC8AC328AE52DDFE2E505BDB
+ ```
+
+**Compressed Public Keys**
+Compressed public keys were introduced to bitcoin to reduce the size of transactions and conserve disk space on nodes that store the bitcoin blockchain database. Most transactions include the public key, which is required to validate the owner’s credentials and spend the bitcoin. Each public key requires 520 bits (prefix + x + y), which when multiplied by several hundred transactions per block, or tens of thousands of transactions per day, adds a significant amount of data to the blockchain.
+
+Because the curve expresses a mathematical function, a point on the curve represents a solution to the equation and, therefore, if we know the x coordinate we can calculate the y coordinate by solving the equation y2 mod p = (x3 + 7) mod p. That allows us to store only the x coordinate of the public key point, omitting the y coordinate and reducing the size of the key and the space required to store it by 256 bits.
+
+Whereas uncompressed public keys have a prefix of 04, compressed public keys start with either a 02 or a 03 prefix. Let’s look at why there are two possible prefixes: because the left side of the equation is y2, the solution for y is a square root, which can have a positive or negative value. Visually, this means that the resulting y coordinate can be above or below the x-axis. As you can see from the graph of the elliptic curve in Figure 4-2, the curve is symmetric, meaning it is reflected like a mirror by the x-axis. So, while we can omit the y coordinate we have to store the sign of y (positive or negative); or in other words, we have to remember if it was above or below the x-axis because each of those options represents a different point and a different public key. When calculating the elliptic curve in binary arithmetic on the finite field of prime order p, the y coordinate is either even or odd, which corresponds to the positive/negative sign as explained earlier. Therefore, to distinguish between the two possible values of y, we store a compressed public key with the prefix 02 if the y is even, and 03 if it is odd, allowing the software to correctly deduce the y coordinate from the x coordinate and uncompress the public key to the full coordinates of the point.
+
+Here’s the same public key from above, shown as a compressed public key stored in 264 bits (66 hex digits) with the prefix 03 indicating the y coordinate is odd:
+
+```
+K = 03F028892BAD7ED57D2FB57BF33081D5CFCF6F9ED3D3D7F159C2E2FFF579DC341A
+ ```
+
+This compressed public key corresponds to the same private key, meaning it is generated from the same private key. However, it looks different from the uncompressed public key. More importantly, if we convert this compressed public key to a bitcoin address it will produce a different bitcoin address. This can be confusing, because it means that a single private key can produce a public key expressed in two different formats (compressed and uncompressed) that produce two different bitcoin addresses. However, the private key is identical for both bitcoin addresses.
+
+Compressed public keys are the default across bitcoin clients. However, not all clients support compressed public keys. Newer clients that support compressed public keys have to account for transactions from older clients that do not support compressed public keys. This is especially important when a wallet application is importing private keys from another bitcoin wallet application, because the new wallet needs to scan the blockchain to find transactions corresponding to these imported keys. Which bitcoin addresses should the bitcoin wallet scan for? The bitcoin addresses produced by uncompressed public keys, or the bitcoin addresses produced by compressed public keys? Both are valid bitcoin addresses, and can be signed for by the private key, but they are different addresses.
+
+To resolve this issue, when private keys are exported from a wallet, the WIF that is used to represent them is implemented differently in newer bitcoin wallets, to indicate that these private keys have been used to produce compressed public keys and therefore compressed bitcoin addresses. This allows the importing wallet to distinguish between private keys originating from older or newer wallets and search the blockchain for transactions with bitcoin addresses corresponding to the uncompressed, or the compressed, public keys, respectively.
+
+“Compressed private keys” is a misnomer! They are not compressed; rather, WIF-compressed signifies that the keys should only be used to derive compressed public keys and their corresponding bitcoin addresses. Ironically, a “WIF-compressed” encoded private key is one byte longer because it has the added 01 suffix to distinguish it from an “uncompressed” one.
+
+**Wallets**
+A common misconception about bitcoin is that bitcoin wallets contain bitcoin. In fact, the wallet contains only keys. The “coins” are recorded in the blockchain on the bitcoin network. Users control the coins on the network by signing transactions with the keys in their wallets. In a sense, a bitcoin wallet is a keychain.
+
+There are two primary types of wallets, distinguished by whether the keys they contain are related to each other or not.
+
+The first type is a *nondeterministic* wallet, where each key is independently generated from a random number. The keys are not related to each other. This type of wallet is also known as a JBOK wallet from the phrase “Just a Bunch Of Keys.”
+
+The second type of wallet is a *deterministic* wallet, where all the keys are derived from a single master key, known as the seed. All the keys in this type of wallet are related to each other and can be generated again if one has the original seed. There are a number of different key derivation methods used in deterministic wallets. The most commonly used derivation method uses a tree-like structure and is known as a *hierarchical deterministic* or *HD* wallet. Deterministic wallets are initialized from a seed. To make these easier to use, seeds are encoded as English words, also known as *mnemonic code words*.
+
+**Nondeterministic (Random) Wallets**
+In the first bitcoin wallet (now called Bitcoin Core), wallets were collections of randomly generated private keys. For example, the original Bitcoin Core client pregenerates 100 random private keys when first started and generates more keys as needed, using each key only once.  Such wallets are being replaced with deterministic wallets because they are cumbersome to manage, back up, and import. The disadvantage of random keys is that if you generate many of them you must keep copies of all of them, meaning that the wallet must be backed up frequently. Each key must be backed up, or the funds it controls are irrevocably lost if the wallet becomes inaccessible.
+
+![nondeterministic.png](/images/nondeterministic_ecea4b2f27.png)
+
+**Deterministic (Seeded) Wallets**
+Deterministic, or “seeded,” wallets are wallets that contain private keys that are all derived from a common seed, through the use of a one-way hash function. The seed is a randomly generated number that is combined with other data* to derive the private keys. In a deterministic wallet, the seed is sufficient to recover all the derived keys, and therefore a single backup at creation time is sufficient. The seed is also sufficient for a wallet export or import, allowing for easy migration of all the user’s keys between different wallet implementations.
+
+![seeded.png](/images/seeded_8936108160.png)
+
+**HD Wallets (BIP-32/BIP-44)**
+Deterministic wallets were developed to make it easy to derive many keys from a single “seed.” The most advanced form of deterministic wallets is the HD wallet defined by the BIP-32 standard. HD wallets contain keys derived in a tree structure, such that a parent key can derive a sequence of children keys, each of which can derive a sequence of grandchildren keys, and so on, to an infinite depth.
+
+![hd-wallet.png](/images/hd_wallet_b929e72470.png)
+
+HD wallets offer two major advantages over random (nondeterministic) keys. First, the tree structure can be used to express additional organizational meaning, such as when a specific branch of subkeys is used to receive incoming payments and a different branch is used to receive change from outgoing payments. Branches of keys can also be used in corporate settings, allocating different branches to departments, subsidiaries, specific functions, or accounting categories.
+
+The second advantage of HD wallets is that users can create a sequence of public keys without having access to the corresponding private keys. This allows HD wallets to be used on an insecure server or in a receive-only capacity, issuing a different public key for each transaction. The public keys do not need to be preloaded or derived in advance, yet the server doesn’t have the private keys that can spend the funds.
+
+**Seeds and Mnemonic Codes (BIP-39)**
+HD wallets are a very powerful mechanism for managing many keys and addresses. They are even more useful if they are combined with a standardized way of creating seeds from a sequence of English words that are easy to transcribe, export, and import across wallets. This is known as a mnemonic and the standard is defined by BIP-39. Today, most bitcoin wallets (as well as wallets for other cryptocurrencies) use this standard and can import and export seeds for backup and recovery using interoperable mnemonics.
+
+Mnemonic code words are word sequences that represent (encode) a random number used as a seed to derive a deterministic wallet. The sequence of words is sufficient to re-create the seed and from there re-create the wallet and all the derived keys. A wallet application that implements deterministic wallets with mnemonic words will show the user a sequence of 12 to 24 words when first creating a wallet. That sequence of words is the wallet backup and can be used to recover and re-create all the keys in the same or any compatible wallet application. Mnemonic words make it easier for users to back up wallets because they are easy to read and correctly transcribe, as compared to a random sequence of numbers.
+
+Mnemonic words are often confused with “brainwallets.” They are not the same. The primary difference is that a brainwallet consists of words chosen by the user, whereas mnemonic words are created randomly by the wallet and presented to the user. This important difference makes mnemonic words much more secure, because humans are very poor sources of randomness.
+
+Mnemonic codes are defined in BIP-39. Note that BIP-39 is one implementation of a mnemonic code standard. There is a different standard, with a different set of words, used by the Electrum wallet and predating BIP-39. BIP-39 was proposed by the company behind the Trezor hardware wallet and is incompatible with Electrum’s implementation. However, BIP-39 has now achieved broad industry support across dozens of interoperable implementations and should be considered the de facto industry standard.
+
+Mnemonic words are generated automatically by the wallet using the standardized process defined in BIP-39. The wallet starts from a source of entropy, adds a checksum, and then maps the entropy to a word list:
+
+- 1. Create a random sequence (entropy) of 128 to 256 bits.
+- 2. Create a checksum of the random sequence by taking the first (entropy-length/32) bits of its SHA256 hash.
+- 3. Add the checksum to the end of the random sequence.
+- 4. Divide the sequence into sections of 11 bits.
+- 5. Map each 11-bit value to a word from the predefined dictionary of 2048 words.
+- 6. The mnemonic code is the sequence of words.
+
+![steps-1-6.png](/images/steps_1_6_fd2f706971.png)
+
+The mnemonic words represent entropy with a length of 128 to 256 bits. The entropy is then used to derive a longer (512-bit) seed through the use of the key-stretching function PBKDF2. The seed produced is then used to build a deterministic wallet and derive its keys.
+
+The key-stretching function takes two parameters: the mnemonic and a salt. The purpose of a salt in a key-stretching function is to make it difficult to build a lookup table enabling a brute-force attack. In the BIP-39 standard, the salt has another purpose—it allows the introduction of a passphrase that serves as an additional security factor protecting the seed, as we will describe in more detail below.
+
+- 7. The first parameter to the PBKDF2 key-stretching function is the mnemonic produced from step 6.
+- 8. The second parameter to the PBKDF2 key-stretching function is a salt. The salt is composed of the string constant "mnemonic" concatenated with an optional user-supplied passphrase string.
+- 9. PBKDF2 stretches the mnemonic and salt parameters using 2048 rounds of hashing with the HMAC-SHA512 algorithm, producing a 512-bit value as its final output. That 512-bit value is the seed.
+
+![steps-7-9.png](/images/steps_7_9_664cdf588d.png)
+
+**Optional passphrase in BIP-39**
+The BIP-39 standard allows the use of an optional passphrase in the derivation of the seed. If no passphrase is used, the mnemonic is stretched with a salt consisting of the constant string "mnemonic", producing a specific 512-bit seed from any given mnemonic. If a passphrase is used, the stretching function produces a different seed from that same mnemonic. In fact, given a single mnemonic, every possible passphrase leads to a different seed.
+
+The optional passphrase creates two important features:
+
+- A second factor (something memorized) that makes a mnemonic useless on its own, protecting mnemonic backups from compromise by a thief. 
+- A form of plausible deniability or “duress wallet,” where a chosen passphrase leads to a wallet with a small amount of funds used to distract an attacker from the “real” wallet that contains the majority of funds.
+
+However, it is important to note that the use of a passphrase also introduces the risk of loss:
+
+- If the wallet owner is incapacitated or dead and no one else knows the passphrase, the seed is useless and all the funds stored in the wallet are lost forever. 
+- Conversely, if the owner backs up the passphrase in the same place as the seed, it defeats the purpose of a second factor.
+
+**Creating an HD Wallet from the Seed**
+HD wallets are created from a single root seed, which is a 128-, 256-, or 512-bit random number. Most commonly, this seed is generated from a mnemonic as detailed above.
+
+Every key in the HD wallet is deterministically derived from this root seed, which makes it possible to re-create the entire HD wallet from that seed in any compatible HD wallet. This makes it easy to back up, restore, export, and import HD wallets containing thousands or even millions of keys by simply transferring only the mnemonic that the root seed is derived from.
+
+![creating-hd-wa;;et.png](/images/creating_hd_wa_et_be51794b75.png)
+
+The chain code is used to introduce deterministic random data to the process, so that knowing the index and a child key is not sufficient to derive other child keys by brute-forcing the parent. Knowing a child key does not make it possible to find its siblings, unless you also have the chain code. The initial chain code seed (at the root of the tree) is made from the seed, while subsequent child chain codes are derived from each parent chain code.
+
+**Extended Keys**
+As we saw earlier, the key derivation function can be used to create children at any level of the tree, based on the three inputs: a key, a chain code, and the index of the desired child. The two essential ingredients are the key and chain code, and combined these are called an extended key. The term “extended key” could also be thought of as “extensible key” because such a key can be used to derive children.
+
+Extended keys are stored and represented simply as the concatenation of the 256-bit key and 256-bit chain code into a 512-bit sequence. There are two types of extended keys. An extended private key is the combination of a private key and chain code and can be used to derive child private keys (and from them, child public keys). An extended public key is a public key and chain code, which can be used to create child public keys.
+
+Extended keys are encoded using Base58Check, to easily export and import between different BIP-32–compatible wallets (e.g. payment processers). The Base58Check coding for extended keys uses a special version number that results in the prefix “xprv” and “xpub” when encoded in Base58 characters to make them easily recognizable.
+
+**Child key derivation**
+The best explanation of this is 
+
+**Hardened child key derivation**
+The ability to derive a branch of public keys from an xpub is very useful, but it comes with a potential risk. Access to an xpub does not give access to child private keys. However, because the xpub contains the chain code, if a child private key is known, or somehow leaked, it can be used with the chain code to derive all the other child private keys. A single leaked child private key, together with a parent chain code, reveals all the private keys of all the children. Worse, the child private key together with a parent chain code can be used to deduce the parent private key.
+
+To counter this risk, HD wallets use an alternative derivation function called hardened derivation, which “breaks” the relationship between parent public key and child chain code. The hardened derivation function uses the parent private key to derive the child chain code, instead of the parent public key.
+
+When the hardened private derivation function is used, the resulting child private key and chain code are completely different from what would result from the normal derivation function. The resulting “branch” of keys can be used to produce extended public keys that are not vulnerable, because the chain code they contain cannot be exploited to reveal any private keys. Hardened derivation is therefore used to create a “gap” in the tree above the level where extended public keys are used.
+
+In simple terms, if you want to use the convenience of an xpub to derive branches of public keys, without exposing yourself to the risk of a leaked chain code, you should derive it from a hardened parent, rather than a normal parent. As a best practice, the level-1 children of the master keys are always derived through the hardened derivation, to prevent compromise of the master keys.
+
+## Transactions and Scripting
+
+Behind the scenes, an actual transaction looks very different from a transaction provided by a typical block explorer. In fact, most of the high-level constructs we see in the various bitcoin application user interfaces do not actually exist in the bitcoin system.
+
+Decoded "raw" transaction looks like this (SegWit will be discussed below):
+
+```
+{
+  "version": 1,
+  "locktime": 0,
+  "vin": [
+    {
+      "txid": "7957a35fe64f80d234d76d83a2a8f1a0d8149a41d81de548f0a65a8a999f6f18",
+      "vout": 0,
+      "scriptSig" : "3045022100884d142d86652a3f47ba4746ec719bbfbd040a570b1deccbb6498c75c4ae24cb02204b9f039ff08df09cbe9f6addac960298cad530a863ea8f53982c09db8f6e3813[ALL] 0484ecc0d46f1918b30928fa0e4ed99f16a0fb4fde0735e7ade8416ab9fe423cc5412336376789d172787ec3457eee41c04f4938de5cc17b4a10fa336a8d752adf",
+      "sequence": 4294967295
+    }
+  ],
+  "vout": [
+    {
+      "value": 0.01500000,
+      "scriptPubKey": "OP_DUP OP_HASH160 ab68025513c3dbd2f7b92a94e0581f5d50f654e7 OP_EQUALVERIFY OP_CHECKSIG"
+    },
+    {
+      "value": 0.08450000,
+      "scriptPubKey": "OP_DUP OP_HASH160 7f9b1a7fb68d60c536c2fd8aeaa53a8f3cc025a8 OP_EQUALVERIFY OP_CHECKSIG",
+    }
+  ]
+}
+ ```
+
+
+
+In bitcoin, there are no coins, no senders, no recipients, no balances, no accounts, and no addresses. All those things are constructed at a higher level for the benefit of the user, to make things easier to understand.
+
+**Transaction outputs**
+They are indivisible chunks of bitcoin currency, recorded on the blockchain. Bitcoin full nodes track all available and spendable outputs, known as unspent transaction outputs, or UTXO. The collection of all UTXO is known as the UTXO set and currently numbers in the millions of UTXO. The UTXO set grows as new UTXO is created and shrinks when UTXO is consumed. Every transaction represents a change in the UTXO set.
+
+When we say that a user’s wallet has “received” bitcoin, what we mean is that the wallet has detected a UTXO that can be spent with one of the keys controlled by that wallet. Thus, a user’s bitcoin “balance” is the sum of all UTXO that user’s wallet can spend and which may be scattered among hundreds of transactions and hundreds of blocks. The concept of a balance is created by the wallet application. Wallets maintain a database to store a quick reference set of all the UTXO they can spend with the keys they control.
+
+A transaction output can have an arbitrary (integer) value denominated as a multiple of satoshis.  Just like dollars can be divided down to two decimal places as cents, bitcoin can be divided down to eight decimal places as satoshis. Although an output can have any arbitrary value, once created it is indivisible. This is an important characteristic of outputs that needs to be emphasized: outputs are discrete and indivisible units of value, denominated in integer satoshis. An unspent output can only be consumed in its entirety by a transaction.
+
+A transaction consumes previously recorded unspent transaction outputs and creates new transaction outputs that can be consumed by a future transaction. This way, chunks of bitcoin value move forward from owner to owner in a chain of transactions consuming and creating UTXO.
+
+The exception to the output and input chain is a special type of transaction called the coinbase transaction, which is the first transaction in each block. This transaction is placed there by the “winning” miner and creates brand-new bitcoin payable to that miner as a reward for mining. This special coinbase transaction does not consume UTXO; instead, it has a special type of input called the “coinbase.” This is how bitcoin’s money supply is created during the mining process, as we will see in [below](/bitcoin).
+
+Transaction outputs consist of two parts:
+
+- An amount of bitcoin, denominated in satoshis, the smallest bitcoin unit. 
+- A cryptographic puzzle that determines the conditions required to spend the output. Also known as a  locking script, a witness script, or a scriptPubKey.
+
+As you can see, the transaction contains two outputs. Each output is defined by a value and a cryptographic puzzle. In the encoding shown by Bitcoin Core, the value is shown in bitcoin, but in the transaction itself it is recorded as an integer denominated in satoshis. The second part of each output is the cryptographic puzzle that sets the conditions for spending. Bitcoin Core shows this as scriptPubKey and shows us a human-readable representation of the script. The topic of locking and unlocking UTXO will be discussed below.
+
+When transactions are transmitted over the network or exchanged between applications, they are serialized. Serialization is the process of converting the internal representation of a data structure into a format that can be transmitted one byte at a time, also known as a byte stream. Serialization is most commonly used for encoding data structures for transmission over a network or for storage in a file. The serialization format of a transaction output is shown below:
+
+**Amount** \- 8 bytes - Bitcoin value in satoshis
+
+**Locking-Script Size** \- 1–9 bytes - Locking-Script length in bytes, to follow
+
+**Locking-Script** \- Variable - A script defining the conditions needed to spend the output
+
+The process of converting from the byte-stream representation of a transaction to a library’s internal representation data structure is called deserialization or transaction parsing. The process of converting back to a byte-stream for transmission over the network, for hashing, or for storage on disk is called serialization
+
+Serialized transaction above presented as hexadecimal notation:
+
+```
+0100000001
+(Transaction inputs)[186f9f998a5aa6f048e51dd8419a14d8a0f1a8a2836dd734d2804fe65fa35779000000008b483045022100884d142d86652a3f47ba4746ec719bbfbd040a570b1deccbb6498c75c4ae24cb02204b9f039ff08df09cbe9f6addac960298cad530a863ea8f53982c09db8f6e381301410484ecc0d46f1918b30928fa0e4ed99f16a0fb4fde0735e7ade8416ab9fe423cc5412336376789d172787ec3457eee41c04f4938de5cc17b4a10fa336a8d752adfffffffff]
+02
+(Transaction outputs)[60e31600000000001976a914ab68025513c3dbd2f7b92a94e0581f5d50f654e788acd0ef8000000000001976a9147f9b1a7fb68d60c536c2fd8aeaa53a8f3cc025a888ac]
+00000000
+ ```
+
+**Transaction Inputs**
+The first part of an input is a pointer to an UTXO by reference to the transaction hash and sequence number where the UTXO is recorded in the blockchain. The second part is an unlocking script, which the wallet constructs in order to satisfy the spending conditions set in the UTXO. Most often, the unlocking script is a digital signature and public key proving ownership of the bitcoin. However, not all unlocking scripts contain signatures. The third part is a sequence number, which will be discussed below.
+
+The input contains four elements:
+
+- A transaction ID, referencing the transaction that contains the UTXO being spent.
+- An output index (vout), identifying which UTXO from that transaction is referenced (first one is zero).
+- A scriptSig, which satisfies the conditions placed on the UTXO, unlocking it for spending.
+- A sequence number (to be discussed below).
+
+Looking just at the input you may have noticed that we don’t know anything about this UTXO, other than a reference to the transaction containing it. We don’t know its value (amount in satoshi), and we don’t know the locking script that sets the conditions for spending it. To find this information, we must retrieve the referenced UTXO by retrieving the underlying transaction.
+
+When transactions are serialized for transmission on the network, their inputs are encoded into a byte stream as shown below:
+
+**Transaction Hash** \- 32 bytes - Pointer to the transaction containing the UTXO to be spent.
+
+**Output Index** \- 4 bytes - The index number of the UTXO to be spent; first one is 0.
+
+**Unlocking-Script Size** \- 1–9 bytes - Unlocking-Script length in bytes, to follow.
+
+**Unlocking-Script** \- Variable - A script that fulfills the conditions of the UTXO locking script.
+
+**Sequence Number** \- 4 bytes - Used for locktime or disabled (0xFFFFFFFF).
+
+**Transaction Fees**
+They serve as an incentive to include (mine) a transaction into the next block and also as a disincentive against abuse of the system by imposing a small cost on every transaction. Transaction fees are collected by the miner who mines the block that records the transaction on the blockchain.
+
+Transaction fees are calculated based on the size of the transaction in kilobytes, not the value of the transaction in bitcoin. Overall, transaction fees are set based on market forces within the bitcoin network. Miners prioritize transactions based on many different criteria, including fees, and might even process transactions for free under certain circumstances. Transaction fees affect the processing priority, meaning that a transaction with sufficient fees is likely to be included in the next block mined, whereas a transaction with insufficient or no fees might be delayed, processed on a best-effort basis after a few blocks, or not processed at all. Transaction fees are not mandatory, and transactions without fees might be processed eventually; however, including transaction fees encourages priority processing.
+
+Over time, the way transaction fees are calculated and the effect they have on transaction prioritization has evolved. At first, transaction fees were fixed and constant across the network. Gradually, the fee structure relaxed and may be influenced by market forces, based on network capacity and transaction volume.
+
+In Bitcoin Core, fee relay policies are set by the minrelaytxfee option. The current default minrelaytxfee is 0.00001 bitcoin or a hundredth of a millibitcoin per kilobyte. Therefore, by default, transactions with a fee less than 0.0001 bitcoin are treated as free and are only relayed if there is space in the mempool; otherwise, they are dropped. Bitcoin nodes can override the default fee relay policy by adjusting the value of minrelaytxfee.
+
+Any bitcoin service that creates transactions, including wallets, exchanges, retail applications, etc., must implement dynamic fees. Dynamic fees can be implemented through a third-party fee estimation service or with a built-in fee estimation algorithm.
+
+The data structure of transactions does not have a field for fees. Instead, fees are implied as the difference between the sum of inputs and the sum of outputs. Any excess amount that remains after all outputs have been deducted from all inputs is the fee that is collected by the miners.
+
+This is a somewhat confusing element of transactions and an important point to understand, because if you are constructing your own transactions you must ensure you do not inadvertently include a very large fee by underspending the inputs. That means that you must account for all inputs, if necessary by creating change, or you will end up giving the miners a very big tip!
+
+**Transaction Scripts and Script Language**
+The bitcoin transaction script language, called Script, is a Forth-like reverse-polish notation stack-based execution language. Both the locking script placed on a UTXO and the unlocking script are written in this scripting language. When a transaction is validated, the unlocking script in each input is executed alongside the corresponding locking script to see if it satisfies the spending condition.
+
+Script is a very simple language that was designed to be limited in scope and executable on a range of hardware, perhaps as simple as an embedded device. It requires minimal processing and cannot do many of the fancy things modern programming languages can do. For its use in validating programmable money, this is a deliberate security feature.
+
+The bitcoin transaction script language contains many operators, but is deliberately limited in one important way—there are no loops or complex flow control capabilities other than conditional flow control. This ensures that the language is not Turing Complete, meaning that scripts have limited complexity and predictable execution times. Remember, every transaction is validated by every full node on the bitcoin network. A limited language prevents the transaction validation mechanism from being used as a vulnerability.
+
+The bitcoin transaction script language is stateless, in that there is no state prior to execution of the script, or state saved after execution of the script. Therefore, all the information needed to execute a script is contained within the script. A script will predictably execute the same way on any system. If your system verifies a script, you can be sure that every other system in the bitcoin network will also verify the script, meaning that a valid transaction is valid for everyone and everyone knows this. This predictability of outcomes is an essential benefit of the bitcoin system.
+
+The scripting language executes the script by processing each item from left to right. Numbers (data constants) are pushed onto the stack. Operators push or pop one or more parameters from the stack, act on them, and might push a result onto the stack. For example, OP_ADD will pop two items from the stack, add them, and push the resulting sum onto the stack.
+
+Conditional operators evaluate a condition, producing a boolean result of TRUE or FALSE. For example, OP_EQUAL pops two items from the stack and pushes TRUE (TRUE is represented by the number 1) if they are equal or FALSE (represented by zero) if they are not equal. Bitcoin transaction scripts usually contain a conditional operator, so that they can produce the TRUE result that signifies a valid transaction.
+
+**Locking And Unlocking Scripts**
+Bitcoin’s transaction validation engine relies on two types of scripts to validate transactions: a locking script and an unlocking script.
+
+A locking script is a spending condition placed on an output: it specifies the conditions that must be met to spend the output in the future. Historically, the locking script was called a scriptPubKey, because it usually contained a public key or bitcoin address (public key hash). In this book we refer to it as a “locking script” to acknowledge the much broader range of possibilities of this scripting technology. In most bitcoin applications, what we refer to as a locking script will appear in the source code as scriptPubKey. You will also see the locking script referred to as a witness script or more generally as a cryptographic puzzle.
+
+An unlocking script is a script that “solves,” or satisfies, the conditions placed on an output by a locking script and allows the output to be spent. Unlocking scripts are part of every transaction input. Most of the time they contain a digital signature produced by the user’s wallet from his or her private key. Historically, the unlocking script was called scriptSig, because it usually contained a digital signature. In most bitcoin applications, the source code refers to the unlocking script as scriptSig. You will also see the unlocking script referred to as a witness. Below, we refer to it as an “unlocking script” to acknowledge the much broader range of locking script requirements, because not all unlocking scripts must contain signatures.
+
+Every bitcoin validating node will validate transactions by executing the locking and unlocking scripts together. Each input contains an unlocking script and refers to a previously existing UTXO. The validation software will copy the unlocking script, retrieve the UTXO referenced by the input, and copy the locking script from that UTXO. The unlocking and locking script are then executed in sequence. The input is valid if the unlocking script satisfies the locking script conditions. All the inputs are validated independently, as part of the overall validation of the transaction.
+
+In the original bitcoin client, the unlocking and locking scripts were concatenated and executed in sequence. For security reasons, this was changed in 2010, because of a vulnerability that allowed a malformed unlocking script to push data onto the stack and corrupt the locking script. In the current implementation, the scripts are executed separately with the stack transferred between the two executions, as described next.
+
+First, the unlocking script is executed, using the stack execution engine. If the unlocking script is executed without errors (e.g., it has no “dangling” operators left over), the main stack (not the alternate stack) is copied and the locking script is executed. If the result of executing the locking script with the stack data copied from the unlocking script is “TRUE,” the unlocking script has succeeded in resolving the conditions imposed by the locking script and, therefore, the input is a valid authorization to spend the UTXO. If any result other than “TRUE” remains after execution of the combined script, the input is invalid because it has failed to satisfy the spending conditions placed on the UTXO.
+
+**Pay-to-Public-Key-Hash (P2PKH)**
+Not that long ago the vast majority of transactions processed on the bitcoin network spend outputs locked with a Pay-to-Public-Key-Hash or “P2PKH” script (We will look at SegWit below). These outputs contain a locking script that locks the output to a public key hash, more commonly known as a bitcoin address. An output locked by a P2PKH script can be unlocked (spent) by presenting a public key and a digital signature created by the corresponding private key.
+
+For example, let’s look at payment at a Cafe. You made a payment of 0.015 bitcoin to the cafe’s bitcoin address. That transaction output would have a locking script of the form:
+
+```
+OP_DUP OP_HASH160 <Cafe Public Key Hash> OP_EQUALVERIFY OP_CHECKSIG
+ ```
+
+The Cafe Public Key Hash is equivalent to the bitcoin address of the cafe, without the Base58Check encoding. Most applications would show the public key hash in hexadecimal encoding and not the familiar bitcoin address Base58Check format that begins with a “1.”
+
+The preceding locking script can be satisfied with an unlocking script of the form:
+
+```
+<Cafe Signature> <Cafe Public Key>
+ ```
+
+The two scripts together would form the following combined validation script:
+
+```
+<Cafe Signature> <Cafe Public Key> OP_DUP OP_HASH160 <Cafe Public Key Hash> OP_EQUALVERIFY OP_CHECKSIG
+ ```
+
+When executed, this combined script will evaluate to TRUE if, and only if, the unlocking script matches the conditions set by the locking script. In other words, the result will be TRUE if the unlocking script has a valid signature from the cafe’s private key that corresponds to the public key hash set as an encumbrance.
+
+![script-execution-1.png](/images/script_execution_1_bb80cf6735.png)
+
+![script-execution-2.png](/images/script_execution_2_6c069e17d9.png)
+
+**Digital Signatures**
+A digital signature serves three purposes in bitcoin (see the following sidebar). First, the signature proves that the owner of the private key, who is by implication the owner of the funds, has authorized the spending of those funds. Secondly, the proof of authorization is undeniable (nonrepudiation). Thirdly, the signature proves that the transaction (or specific parts of the transaction) have not and cannot be modified by anyone after it has been been signed.
+
+Note that each transaction input is signed independently. This is critical, as neither the signatures nor the inputs have to belong to or be applied by the same “owners.” In fact, a specific transaction scheme called “CoinJoin” uses this fact to create multi-party transactions for privacy.
+
+A digital signature is a mathematical scheme that consists of two parts. The first part is an algorithm for creating a signature, using a private key (the signing key), from a message (the transaction). The second part is an algorithm that allows anyone to verify the signature, given also the message and a public key.
+
+In bitcoin’s implementation of the ECDSA algorithm, the “message” being signed is the transaction, or more accurately a hash of a specific subset of the data in the transaction (see below). The signing key is the user’s private key.
+
+**Signature Hash Types (SIGHASH)**
+Digital signatures are applied to messages, which in the case of bitcoin, are the transactions themselves. The signature implies a commitment by the signer to specific transaction data. In the simplest form, the signature applies to the entire transaction, thereby committing all the inputs, outputs, and other transaction fields. However, a signature can commit to only a subset of the data in a transaction, which is useful for a number of scenarios as we will see in this section.
+
+Bitcoin signatures have a way of indicating which part of a transaction’s data is included in the hash signed by the private key using a SIGHASH flag. The SIGHASH flag is a single byte that is appended to the signature. Every signature has a SIGHASH flag and the flag can be different from to input to input. A transaction with three signed inputs may have three signatures with different SIGHASH flags, each signature signing (committing) different parts of the transaction.
+
+Remember, each input may contain a signature in its unlocking script. As a result, a transaction that contains several inputs may have signatures with different SIGHASH flags that commit different parts of the transaction in each of the inputs. Note also that bitcoin transactions may contain inputs from different “owners,” who may sign only one input in a partially constructed (and invalid) transaction, collaborating with others to gather all the necessary signatures to make a valid transaction. Many of the SIGHASH flag types only make sense if you think of multiple participants collaborating outside the bitcoin network and updating a partially signed transaction.
+
+There are three SIGHASH flags: ALL, NONE, and SINGLE. In addition, there is a modifier flag SIGHASH_ANYONECANPAY, which can be combined with each of the preceding flags. When ANYONECANPAY is set, only one input is signed, leaving the rest (and their sequence numbers) open for modification. The ANYONECANPAY has the value 0x80 and is applied by bitwise OR.
+
+**ALL** \- 0x01 - Signature applies to all inputs and outputs.
+
+**NONE** \- 0x02 - Signature applies to all inputs, none of the outputs.
+
+**SINGLE** \- 0x03 - Signature applies to all inputs but only the one output with the same index number as the signed input.
+
+**ALL|ANYONECANPAY** \- 0x81 - Signature applies to one inputs and all outputs.
+
+**NONE|ANYONECANPAY** \- 0x82 - Signature applies to one inputs, none of the outputs.
+
+**SINGLE|ANYONECANPAY** \- 0x83 - Signature applies to one input and the output with the same index number.
+
+The way SIGHASH flags are applied during signing and verification is that a copy of the transaction is made and certain fields within are truncated. The resulting transaction is serialized. The SIGHASH flag is added to the end of the serialized transaction and the result is hashed. The hash itself is the “message” that is signed. Depending on which SIGHASH flag is used, different parts of the transaction are truncated.
+
+Let’s look how they can be used in practice:
+
+**ALL|ANYONECANPAY** \- This construction can be used to make a “crowdfunding”-style transaction. Someone attempting to raise funds can construct a transaction with a single output. The single output pays the “goal” amount to the fundraiser. Such a transaction is obviously not valid, as it has no inputs. However, others can now amend it by adding an input of their own, as a donation. They sign their own input with ALL|ANYONECANPAY. Unless enough inputs are gathered to reach the value of the output, the transaction is invalid. Each donation is a “pledge,” which cannot be collected by the fundraiser until the entire goal amount is raised.
+
+**NONE|ANYONECANPAY** \- This construction can be used to build a “dust collector.” Users who have tiny UTXO in their wallets can’t spend these without the cost in fees exceeding the value of the dust. With this type of signature, the dust UTXO can be donated for anyone to aggregate and spend whenever they want.
+
+**NONE** \- This construction can be used to create a “bearer check” or “blank check” of a specific amount. It commits to the input, but allows the output locking script to be changed. Anyone can write their own bitcoin address into the output locking script and redeem the transaction. However, the output value itself is locked by the signature.
+
+**Multisignature**
+Multisignature scripts set a condition where N public keys are recorded in the script and at least M of those must provide signatures to unlock the funds. This is also known as an M-of-N scheme, where N is the total number of keys and M is the threshold of signatures required for validation. For example, a 2-of-3 multisignature is one where three public keys are listed as potential signers and at least two of those must be used to create signatures for a valid transaction to spend the funds.
+
+The general form of a locking script setting an M-of-N multisignature condition is:
+
+```
+M <Public Key 1> <Public Key 2> ... <Public Key N> N CHECKMULTISIG
+ ```
+
+where N is the total number of listed public keys and M is the threshold of required signatures to spend the output.
+
+A locking script setting a 2-of-3 multisignature condition looks like this:
+
+```
+2 <Public Key A> <Public Key B> <Public Key C> 3 CHECKMULTISIG
+ ```
+
+The preceding locking script can be satisfied with an unlocking script containing pairs of signatures and public keys:
+
+```
+<Signature B> <Signature C>
+ ```
+
+or any combination of two signatures from the private keys corresponding to the three listed public keys.
+
+The two scripts together would form the combined validation script:
+
+```
+<Signature B> <Signature C> 2 <Public Key A> <Public Key B> <Public Key C> 3 CHECKMULTISIG
+ ```
+
+There is a bug in CHECKMULTISIG’s execution that requires a slight workaround. When CHECKMULTISIG executes, it should consume M+N+2 items on the stack as parameters. However, due to the bug, CHECKMULTISIG will pop an extra value or one value more than expected.
+
+Let’s look at this in greater detail using the previous validation example:
+
+```
+<Signature B> <Signature C> 2 <Public Key A> <Public Key B> <Public Key C> 3 CHECKMULTISIG
+ ```
+
+First, CHECKMULTISIG pops the top item, which is N (in this example “3”). Then it pops N items, which are the public keys that can sign. In this example, public keys A, B, and C. Then, it pops one item, which is M, the quorum (how many signatures are needed). Here M = 2. At this point, CHECKMULTISIG should pop the final M items, which are the signatures, and see if they are valid. However, unfortunately, a bug in the implementation causes CHECKMULTISIG to pop one more item (M+1 total) than it should. The extra item is disregarded when checking the signatures so it has no direct effect on CHECKMULTISIG itself. However, an extra value must be present because if it is not present, when CHECKMULTISIG attempts to pop on an empty stack, it will cause a stack error and script failure (marking the transaction as invalid). Because the extra item is disregarded it can be anything, but customarily 0 is used.
+
+Because this bug became part of the consensus rules, it must now be replicated forever. Therefore the correct script validation would look like this:
+
+```
+0 <Signature B> <Signature C> 2 <Public Key A> <Public Key B> <Public Key C> 3 CHECKMULTISIG
+ ```
+
+Thus the unlocking script actually used in multisig is not:
+
+```
+<Signature B> <Signature C>
+ ```
+
+but instead it is:
+
+```
+0 <Signature B> <Signature C>
+ ```
+
+From now on, if you see a multisig unlocking script, you should expect to see an extra 0 in the script, whose only purpose is as a workaround to a bug that accidentally became a consensus rule.
+
+**Pay-to-Script-Hash (P2SH)**
+Pay-to-Script-Hash (P2SH) was introduced in 2012 as a powerful new type of transaction that greatly simplifies the use of complex transaction scripts.
+
+Let's imagine a guy named Mohammed, an electronics importer.
+Mohammed’s company uses bitcoin’s multisignature feature extensively for its corporate accounts. Mohammed’s company uses a multisignature script for all customer payments. With the multisignature scheme, any payments made by customers are locked in such a way that they require at least two signatures to release, from Mohammed and one of his partners or from his attorney who has a backup key. A multisignature scheme like that offers corporate governance controls and protects against theft, embezzlement, or loss.
+
+The resulting script is quite long and looks like this:
+
+```
+2 <Mohammed's Public Key> <Partner1 Public Key> <Partner2 Public Key> <Partner3 Public Key> <Attorney Public Key> 5 CHECKMULTISIG
+ ```
+
+Although multisignature scripts are a powerful feature, they are cumbersome to use. Given the preceding script, Mohammed would have to communicate this script to every customer prior to payment. Each customer would have to use special bitcoin wallet software with the ability to create custom transaction scripts, and each customer would have to understand how to create a transaction using custom scripts. Furthermore, the resulting transaction would be larger than a simple payment transaction, because this script contains very long public keys. The burden of that extra-large transaction would be borne by the customer in the form of fees. Finally, a large transaction script like this would be carried in the UTXO set in RAM in every full node, until it was spent. All of these issues make using complex locking scripts difficult in practice.
+
+P2SH was developed to resolve these practical difficulties and to make the use of complex scripts as easy as a payment to a bitcoin address. With P2SH payments, the complex locking script is replaced with its digital fingerprint, a cryptographic hash. When a transaction attempting to spend the UTXO is presented later, it must contain the script that matches the hash, in addition to the unlocking script. In simple terms, P2SH means “pay to a script matching this hash, a script that will be presented later when this output is spent.”
+
+In P2SH transactions, the locking script that is replaced by a hash is referred to as the redeem script because it is presented to the system at redemption time rather than as a locking script.
+
+This entire script can instead be represented by a 20-byte cryptographic hash, by first applying the SHA256 hashing algorithm and then applying the RIPEMD160 algorithm on the result. The 20-byte hash of the preceding script is:
+
+```
+54c557e07dde5bb6cb791c7a540e0a4796f5e97e
+ ```
+
+A P2SH transaction locks the output to this hash instead of the longer script, using the locking script:
+
+```
+HASH160 54c557e07dde5bb6cb791c7a540e0a4796f5e97e EQUAL
+ ```
+
+which, as you can see, is much shorter. Instead of “pay to this 5-key multisignature script,” the P2SH equivalent transaction is “pay to a script with this hash.” A customer making a payment to Mohammed’s company need only include this much shorter locking script in his payment. When Mohammed and his partners want to spend this UTXO, they must present the original redeem script (the one whose hash locked the UTXO) and the signatures necessary to unlock it, like this:
+
+```
+<Sig1> <Sig2> <2 PK1 PK2 PK3 PK4 PK5 5 CHECKMULTISIG>
+ ```
+
+The two scripts are combined in two stages. First, the redeem script is checked against the locking script to make sure the hash matches:
+
+```
+<2 PK1 PK2 PK3 PK4 PK5 5 CHECKMULTISIG> HASH160 <redeem scriptHash> EQUAL
+ ```
+
+If the redeem script hash matches, the unlocking script is executed on its own, to unlock the redeem script:
+
+```
+<Sig1> <Sig2> 2 PK1 PK2 PK3 PK4 PK5 5 CHECKMULTISIG
+ ```
+
+Another important part of the P2SH feature is the ability to encode a script hash as an address, as defined in BIP-13. P2SH addresses are Base58Check encodings of the 20-byte hash of a script, just like bitcoin addresses are Base58Check encodings of the 20-byte hash of a public key. P2SH addresses use the version prefix “5,” which results in Base58Check-encoded addresses that start with a “3.” For example, Mohammed’s complex script, hashed and Base58Check-encoded as a P2SH address, becomes 39RF6JqABiHdYHkfChV6USGMe6Nsr66Gzw. Now, Mohammed can give this “address” to his customers and they can use almost any bitcoin wallet to make a simple payment, as if it were a bitcoin address. The 3 prefix gives them a hint that this is a special type of address, one corresponding to a script instead of a public key, but otherwise it works in exactly the same way as a payment to a bitcoin address.
+
+P2SH addresses hide all of the complexity, so that the person making a payment does not see the script.
+
+The P2SH feature offers the following benefits compared to the direct use of complex scripts in locking outputs:
+
+- Complex scripts are replaced by shorter fingerprints in the transaction output, making the transaction smaller.
+- Scripts can be coded as an address, so the sender and the sender’s wallet don’t need complex engineering to implement P2SH.
+- Shifts the burden of constructing the script to the recipient, not the sender.
+- Shifts the burden in data storage for the long script from the output (which is in the UTXO set) to the input (stored on the blockchain).
+- Shifts the burden in data storage for the long script from the present time (payment) to a future time (when it is spent).
+- Shifts the transaction fee cost of a long script from the sender to the recipient, who has to include the long redeem script to spend it.
+
+**Data Recording Output (RETURN)**
+RETURN allows developers to add 80 bytes of nonpayment data to a transaction output. However, unlike the use of “fake” UTXO(storing data and using the destination bitcoin address as a freeform 20-byte field), the RETURN operator creates an explicitly provably unspendable output, which does not need to be stored in the UTXO set. RETURN outputs are recorded on the blockchain, so they consume disk space and contribute to the increase in the blockchain’s size, but they are not stored in the UTXO set and therefore do not bloat the UTXO memory pool and burden full nodes with the cost of more expensive RAM.
+
+The data portion is limited to 80 bytes and most often represents a hash, such as the output from the SHA256 algorithm (32 bytes). Many applications put a prefix in front of the data to help identify the application. For example, the "Proof of Existence" digital notarization service uses the 8-byte prefix DOCPROOF, which is ASCII encoded as 44 4f 43 50 52 4f 4f 46 in hexadecimal.
+
+Keep in mind that there is no “unlocking script” that corresponds to RETURN that could possibly be used to “spend” a RETURN output. The whole point of RETURN is that you can’t spend the money locked in that output, and therefore it does not need to be held in the UTXO set as potentially spendable—RETURN is provably unspendable. RETURN is usually an output with a zero bitcoin amount, because any bitcoin assigned to such an output is effectively lost forever. If a RETURN is referenced as an input in a transaction, the script validation engine will halt the execution of the validation script and mark the transaction as invalid. The execution of RETURN essentially causes the script to “RETURN” with a FALSE and halt. Thus, if you accidentally reference a RETURN output as an input in a transaction, that transaction is invalid.
+
+**Absolute Timelocks**
+Timelocks are useful for postdating transactions and locking funds to a date in the future. More importantly, timelocks extend bitcoin scripting into the dimension of time, opening the door for complex multistep smart contracts.
+
+From the beginning, bitcoin has had a transaction-level timelock feature. Transaction locktime is a transaction-level setting (a field in the transaction data structure) that defines the earliest time that a transaction is valid and can be relayed on the network or added to the blockchain. Locktime is also known as nLocktime from the variable name used in the Bitcoin Core codebase. It is set to zero in most transactions to indicate immediate propagation and execution. If nLocktime is nonzero and below 500 million, it is interpreted as a block height, meaning the transaction is not valid and is not relayed or included in the blockchain prior to the specified block height. If it is above 500 million, it is interpreted as a Unix Epoch timestamp and the transaction is not valid prior to the specified time. Transactions with nLocktime specifying a future block or time must be held by the originating system and transmitted to the bitcoin network only after they become valid. If a transaction is transmitted to the network before the specified nLocktime, the transaction will be rejected by the first node as invalid and will not be relayed to other nodes. The use of nLocktime is equivalent to postdating a paper check.
+
+nLocktime has the limitation that while it makes it possible to spend some outputs in the future, it does not make it impossible to spend them until that time. The only guarantee is that the recipient will not be able to redeem it before 3 months have elapsed. There is no guarantee that the recipient will get the funds, because the sender might have created the transaction, but spent those funds the next day. To achieve such a guarantee, the timelock restriction must be placed on the UTXO itself and be part of the locking script, rather than on the transaction. This is achieved by the next form of timelock, called Check Lock Time Verify.
+
+Based on a specifications in BIP-65, a new script operator called CHECKLOCKTIMEVERIFY (CLTV) was added to the scripting language. CLTV is a per-output timelock, rather than a per-transaction timelock as is the case with nLocktime. This allows for much greater flexibility in the way timelocks are applied.
+
+In simple terms, by adding the CLTV opcode in the redeem script of an output it restricts the output, so that it can only be spent after the specified time has elapsed.
+
+CLTV doesn’t replace nLocktime, but rather restricts specific UTXO such that they can only be spent in a future transaction with nLocktime set to a greater or equal value.
+
+The CLTV opcode takes one parameter as input, expressed as a number in the same format as nLocktime (either a block height or Unix epoch time). As indicated by the VERIFY suffix, CLTV is the type of opcode that halts execution of the script if the outcome is FALSE. If it results in TRUE, execution continues.
+
+In order to lock an output with CLTV, you insert it into the redeem script of the output in the transaction that creates the output. A normal P2PKH script looks like this:
+
+```
+DUP HASH160 <Public Key Hash> EQUALVERIFY CHECKSIG
+ ```
+
+To lock it to a time, say 3 months from now, the transaction would be a P2SH transaction with a redeem script like this:
+
+```
+<now + 3 months> CHECKLOCKTIMEVERIFY DROP DUP HASH160 <Public Key Hash> EQUALVERIFY CHECKSIG
+ ```
+
+where <now + 3 months> is a block height or time value estimated 3 months from the time the transaction is mined: current block height + 12,960 (blocks) or current Unix epoch time + 7,760,000 (seconds). For now, don’t worry about the DROP opcode that follows CHECKLOCKTIMEVERIFY; it will be explained shortly.
+
+When someone tries to spend this UTXO, he constructs a transaction that references the UTXO as an input. He uses his signature and public key in the unlocking script of that input and sets the transaction nLocktime to be equal or greater to the timelock in the CHECKLOCKTIMEVERIFY. 
+
+Then the transaction is evaluated as follows. If the CHECKLOCKTIMEVERIFY parameter is less than or equal the spending transaction’s nLocktime, script execution continues, otherwise, script execution halts and the transaction is deemed invalid.
+
+After execution, if CLTV is satisfied, the time parameter that preceded it remains as the top item on the stack and may need to be dropped, with DROP, for correct execution of subsequent script opcodes. You will often see CHECKLOCKTIMEVERIFY followed by DROP in scripts for this reason.
+
+**Relative Timelocks**
+nLocktime and CLTV are both absolute timelocks in that they specify an absolute point in time. The next two timelock features we will examine are relative timelocks in that they specify, as a condition of spending an output, an elapsed time from the confirmation of the output in the blockchain.
+
+Relative timelocks are useful because they allow a chain of two or more interdependent transactions to be held off chain, while imposing a time constraint on one transaction that is dependent on the elapsed time from the confirmation of a previous transaction. In other words, the clock doesn’t start counting until the UTXO is recorded on the blockchain.
+
+Relative timelocks can be set on each input of a transaction, by setting the nSequence field in an input. The nSequence field was originally intended to allow modification of transactions in the mempool. The original meaning of nSequence was never properly implemented and the value of nSequence is customarily set to 2^32 in transactions that do not utilize timelocks. For transactions with nLocktime or CHECKLOCKTIMEVERIFY, the nSequence value must be set to less than 2^32 for the timelock guards to have effect.
+
+Programmatically, that means that if the most significant (bit 1<<31) is not set, it is a flag that means “relative locktime.” Otherwise (bit 1<<31 set), the nSequence value is reserved for other uses such as enabling CHECKLOCKTIMEVERIFY, nLocktime, Opt-In-Replace-By-Fee, and other future developments.
+
+Transaction inputs with nSequence values less than 2^31 are interpreted as having a relative timelock. Such a transaction is only valid once the input has aged by the relative timelock amount. For example, a transaction with one input with an nSequence relative timelock of 30 blocks is only valid when at least 30 blocks have elapsed from the time the UTXO referenced in the input was mined. Since nSequence is a per-input field, a transaction may contain any number of timelocked inputs, all of which must have sufficiently aged for the transaction to be valid.
+
+The nSequence value is specified in either blocks or seconds, but in a slightly different format than we saw used in nLocktime. A type-flag is used to differentiate between values counting blocks and values counting time in seconds. The type-flag is set in the 23rd least-significant bit (i.e., value 1<<22). If the type-flag is set, then the nSequence value is interpreted as a multiple of 512 seconds. If the type-flag is not set, the nSequence value is interpreted as a number of blocks.
+
+When interpreting nSequence as a relative timelock, only the 16 least significant bits are considered. Once the flags (bits 32 and 23) are evaluated, the nSequence value is usually “masked” with a 16-bit mask (e.g. 0x0000FFFF).
+
+![nSequence-flags.png](/images/n_Sequence_flags_b117fc5fdb.png)
+
+Just like CLTV and nLocktime, there is a script opcode for relative timelocks that leverages the nSequence value in scripts. That opcode is CHECKSEQUENCEVERIFY, commonly referred to as CSV for short.
+
+The CSV opcode when evaluated in a UTXO’s redeem script allows spending only in a transaction whose input nSequence value is greater than or equal to the CSV parameter. Essentially, this restricts spending the UTXO until a certain number of blocks or seconds have elapsed relative to the time the UTXO was mined.
+
+As with CLTV, the value in CSV must match the format in the corresponding nSequence value. If CSV is specified in terms of blocks, then so must nSequence. If CSV is specified in terms of seconds, then so must nSequence.
+
+Relative timelocks with CSV are especially useful when several (chained) transactions are created and signed, but not propagated, when they’re kept “off-chain.” A child transaction cannot be used until the parent transaction has been propagated, mined, and aged by the time specified in the relative timelock.
+
+**Median-Time-Past**
+As part of the activation of relative timelocks, there was also a change in the way “time” is calculated for timelocks (both absolute and relative). In bitcoin there is a subtle, but very significant, difference between wall time and consensus time. Bitcoin is a decentralized network, which means that each participant has his or her own perspective of time. Events on the network do not occur instantaneously everywhere. Network latency must be factored into the perspective of each node. Eventually everything is synchronized to create a common ledger. Bitcoin reaches consensus every 10 minutes about the state of the ledger as it existed in the past.
+
+The timestamps set in block headers are set by the miners. There is a certain degree of latitude allowed by the consensus rules to account for differences in clock accuracy between decentralized nodes. However, this creates an unfortunate incentive for miners to lie about the time in a block so as to earn extra fees by including timelocked transactions that are not yet mature. See the following section for more information.
+
+To remove the incentive to lie and strengthen the security of timelocks, a BIP was proposed and activated at the same time as the BIPs for relative timelocks. This is BIP-113, which defines a new consensus measurement of time called Median-Time-Past.
+
+Median-Time-Past is calculated by taking the timestamps of the last 11 blocks and finding the median. That median time then becomes consensus time and is used for all timelock calculations. By taking the midpoint from approximately two hours in the past, the influence of any one block’s timestamp is reduced. By incorporating 11 blocks, no single miner can influence the timestamps in order to gain fees from transactions with a timelock that hasn’t yet matured.
+
+Median-Time-Past changes the implementation of time calculations for nLocktime, CLTV, nSequence, and CSV. The consensus time calculated by Median-Time-Past is always approximately one hour behind wall clock time. If you create timelock transactions, you should account for it when estimating the desired value to encode in nLocktime, nSequence, CLTV, and CSV.
+
+## Network and Blockchain
+
+Bitcoin’s P2P network architecture is much more than a topology choice. Bitcoin is a P2P digital cash system by design, and the network architecture is both a reflection and a foundation of that core characteristic. Decentralization of control is a core design principle that can only be achieved and maintained by a flat, decentralized P2P consensus network.
+
+The term “bitcoin network” refers to the collection of nodes running the bitcoin P2P protocol. In addition to the bitcoin P2P protocol, there are other protocols such as Stratum that are used for mining and lightweight or mobile wallets. These additional protocols are provided by gateway routing servers that access the bitcoin network using the bitcoin P2P protocol and then extend that network to nodes running other protocols. For example, Stratum servers connect Stratum mining nodes via the Stratum protocol to the main bitcoin network and bridge the Stratum protocol to the bitcoin P2P protocol.
+
+The extended bitcoin network includes the network running the bitcoin P2P protocol, described earlier, as well as nodes running specialized protocols. Attached to the main bitcoin P2P network are a number of pool servers and protocol gateways that connect nodes running other protocols. These other protocol nodes are mostly pool mining nodes and lightweight wallet clients.
+
+![node-types.png](/images/download_7835b6a530.png)
+
+When a new node boots up, it must discover other bitcoin nodes on the network in order to participate. To start this process, a new node must discover at least one existing node on the network and connect to it. The geographic location of other nodes is irrelevant; the bitcoin network topology is not geographically defined. Therefore, any existing bitcoin nodes can be selected at random.
+
+To connect to a known peer, nodes establish a TCP connection, usually to port 8333 (the port generally known as the one used by bitcoin), or an alternative port if one is provided. Upon establishing a connection, the node will start a “handshake” by transmitting a  version message, which contains basic identifying information, including:
+
+nVersion -The bitcoin P2P protocol version the client “speaks” (e.g., 70002).
+nLocalServices - A list of local services supported by the node, currently just NODE_NETWORK.
+nTime - The current time.
+addrYou - The IP address of the remote node as seen from this node.
+addrMe - The IP address of the local node, as discovered by the local node.
+subver - A sub-version showing the type of software running on this node (e.g., /Satoshi:0.9.2.1/).
+BestHeight - The block height of this node’s blockchain.
+
+The version message is always the first message sent by any peer to another peer. The local peer receiving a version message will examine the remote peer’s reported nVersion and decide if the remote peer is compatible. If the remote peer is compatible, the local peer will acknowledge the version message and establish a connection by sending a verack.
+
+How does a new node find peers? The first method is to query DNS using a number of “DNS seeds,” which are DNS servers that provide a list of IP addresses of bitcoin nodes. Some of those DNS seeds provide a static list of IP addresses of stable bitcoin listening nodes. Some of the DNS seeds are custom implementations of BIND (Berkeley Internet Name Daemon) that return a random subset from a list of bitcoin node addresses collected by a crawler or a long-running bitcoin node.
+
+Alternatively, a bootstrapping node that knows nothing of the network must be given the IP address of at least one bitcoin node, after which it can establish connections through further introductions.
+
+Once one or more connections are established, the new node will send an addr message containing its own IP address to its neighbors. The neighbors will, in turn, forward the addr message to their neighbors, ensuring that the newly connected node becomes well known and better connected. Additionally, the newly connected node can send getaddr to the neighbors, asking them to return a list of IP addresses of other peers. That way, a node can find peers to connect to and advertise its existence on the network for other nodes to find it.
+
+A node must connect to a few different peers in order to establish diverse paths into the bitcoin network. Paths are not reliable - nodes come and go - and so the node must continue to discover new nodes as it loses old connections as well as assist other nodes when they bootstrap. It’s also unnecessary and wasteful of network resources to connect to more than a handful of nodes. After bootstrapping, a node will remember its most recent successful peer connections, so that if it is rebooted it can quickly reestablish connections with its former peer network. If none of the former peers respond to its connection request, the node can use the seed nodes to bootstrap again.
+
+If there is no traffic on a connection, nodes will periodically send a message to maintain the connection. If a node has not communicated on a connection for more than 90 minutes, it is assumed to be disconnected and a new peer will be sought. Thus, the network dynamically adjusts to transient nodes and network problems, and can organically grow and shrink as needed without any central control.
+
+**Exchanging “Inventory”**
+The first thing a full node will do once it connects to peers is try to construct a complete blockchain. If it is a brand-new node and has no blockchain at all, it only knows one block, the genesis block, which is statically embedded in the client software.
+
+The process of syncing the blockchain starts with the version message. A node will see the version messages from its peers, know how many blocks they each have, and be able to compare to how many blocks it has in its own blockchain. Peered nodes will exchange a getblocks message that contains the hash of the top block on their local blockchain. One of the peers will be able to identify the received hash as belonging to a block that is not at the top, but rather belongs to an older block, thus deducing that its own local blockchain is longer than its peer’s.
+
+The peer that has the longer blockchain has more blocks than the other node and can identify which blocks the other node needs in order to “catch up.” It will identify the first 500 blocks to share and transmit their hashes using an inv (inventory) message. The node missing these blocks will then retrieve them, by issuing a series of getdata messages requesting the full block data and identifying the requested blocks using the hashes from the inv message.
+
+Let’s assume, for example, that a node only has the genesis block. It will then receive an inv message from its peers containing the hashes of the next 500 blocks in the chain. It will start requesting blocks from all of its connected peers, spreading the load and ensuring that it doesn’t overwhelm any peer with requests. The node keeps track of how many blocks are “in transit” per peer connection, meaning blocks that it has requested but not received, checking that it does not exceed a limit (MAX_BLOCKS_IN_TRANSIT_PER_PEER). This way, if it needs a lot of blocks, it will only request new ones as previous requests are fulfilled, allowing the peers to control the pace of updates and not overwhelm the network. As each block is received, it is added to the blockchain. As the local blockchain is gradually built up, more blocks are requested and received, and the process continues until the node catches up to the rest of the network.
+
+This process of comparing the local blockchain with the peers and retrieving any missing blocks happens any time a node goes offline for any period of time. Whether a node has been offline for a few minutes and is missing a few blocks, or a month and is missing a few thousand blocks, it starts by sending getblocks, gets an inv response, and starts downloading the missing blocks.
+
+**Simplified Payment Verification (SPV) Nodes**
+SPV nodes download only the block headers and do not download the transactions included in each block. SPV nodes cannot construct a full picture of all the UTXOs that are available for spending because they do not know about all the transactions on the network. SPV nodes verify transactions using a slightly different methodology that relies on peers to provide partial views of relevant parts of the blockchain on demand.
+
+SPV verifies transactions by reference to their depth in the blockchain instead of their height. Whereas a full blockchain node will construct a fully verified chain of thousands of blocks and transactions reaching down the blockchain all the way to the genesis block, an SPV node will verify the chain of all blocks (but not all transactions) and link that chain to the transaction of interest using a merkle path (will be explained below). Then, the SPV node waits until it sees the six blocks 300,001 through 300,006 piled on top of the block containing the transaction and verifies it by establishing its depth under blocks 300,006 to 300,001. The fact that other nodes on the network accepted block 300,000 and then did the necessary work to produce six more blocks on top of it is proof, by proxy, that the transaction was not a double-spend.
+
+Because SPV nodes need to retrieve specific transactions in order to selectively verify them, they also create a privacy risk. Unlike full blockchain nodes, which collect all transactions within each block, the SPV node’s requests for specific data can inadvertently reveal the addresses in their wallet. For example, a third party monitoring a network could keep track of all the transactions requested by a wallet on an SPV node and use those to associate bitcoin addresses with the user of that wallet, destroying the user’s privacy.
+
+Shortly after the introduction of SPV/lightweight nodes, bitcoin developers added a feature called  to address the privacy risks of SPV nodes. Bloom filters allow SPV nodes to receive a subset of the transactions without revealing precisely which addresses they are interested in, through a filtering mechanism that uses probabilities rather than fixed patterns. Bloom filters allow an SPV node to specify a search pattern for transactions that can be tuned toward precision or privacy. A more specific bloom filter will produce accurate results, but at the expense of revealing what patterns the SPV node is interested in, thus revealing the addresses owned by the user’s wallet. A less specific bloom filter will produce more data about more transactions, many irrelevant to the node, but will allow the node to maintain better privacy.
+
+An SPV node will initialize a bloom filter as “empty”; in that state the bloom filter will not match any patterns. The SPV node will then make a list of all the addresses, keys, and hashes that it is interested in. It will do this by extracting the public key hash and script hash and transaction IDs from any UTXO controlled by its wallet. The SPV node then adds each of these to the bloom filter, so that the bloom filter will “match” if these patterns are present in a transaction, without revealing the patterns themselves.
+
+The SPV node will then send a filterload message to the peer, containing the bloom filter to use on the connection. On the peer, bloom filters are checked against each incoming transaction. Only transactions that match the filter are sent to the node.
+
+In response to a getdata message from the node, peers will send a merkleblock message that contains only block headers for blocks matching the filter and a merkle path for each matching transaction. The peer will then also send tx messages containing the transactions matched by the filter.
+
+As the full node sends transactions to the SPV node, the SPV node discards any false positives and uses the correctly matched transactions to update its UTXO set and wallet balance. As it updates its own view of the UTXO set, it also modifies the bloom filter to match any future transactions referencing the UTXO it just found. The full node then uses the new bloom filter to match new transactions and the whole process repeats.
+
+Nodes that implement SPV have weaker privacy than a full node. A full node receives all transactions and therefore reveals no information about whether it is using some address in its wallet. An SPV node receives a filtered list of transactions related to the addresses that are in its wallet. As a result, it reduces the privacy of the owner.
+
+Bloom filters are a way to reduce the loss of privacy. Without them, an SPV node would have to explicitly list the addresses it was interested in, creating a serious breach of privacy. However, even with bloom filters, an adversary monitoring the traffic of an SPV client or connected to it directly as a node in the P2P network can collect enough information over time to learn the addresses in the wallet of the SPV client.
+
+Most new users of bitcoin assume that the network communications of a bitcoin node are encrypted. In fact, the original implementation of bitcoin communicates entirely in the clear. While this is not a major privacy concern for full nodes, it is a big problem for SPV nodes.
+
+**Structure of a Block**
+Block Size - 4 bytes - The size of the block, in bytes, following this field.
+Block Header - 80 bytes - Several fields form the block header.
+Transaction Counter - 1–9 bytes - How many transactions follow.
+Transactions - Variable - The transactions recorded in this block.
+
+**Block Header**
+Version - 4 bytes - A version number to track software/protocol upgrades.
+Previous Block Hash - 32 bytes - A reference to the hash of the previous block in the chain.
+Merkle Root - 32 bytes - A hash of the root of the merkle tree of this block’s transactions.
+Timestamp - 4 bytes - The approximate creation time of this block (seconds from Unix Epoch).
+Difficulty Target - 4 bytes - The Proof-of-Work algorithm difficulty target for this block.
+Nonce - 4 byte - A counter used for the Proof-of-Work algorithm.
+
+The “previous block hash” field is inside the block header and thereby affects the current block’s hash. The child’s own identity changes if the parent’s identity changes. When the parent is modified in any way, the parent’s hash changes. The parent’s changed hash necessitates a change in the “previous block hash” pointer of the child. This in turn causes the child’s hash to change, which requires a change in the pointer of the grandchild, which in turn changes the grandchild, and so on. This cascade effect ensures that once a block has many generations following it, it cannot be changed without forcing a recalculation of all subsequent blocks. Because such a recalculation would require enormous computation (and therefore energy consumption), the existence of a long chain of blocks makes the blockchain’s deep history immutable, which is a key feature of bitcoin’s security.
+
+The primary identifier of a block is its cryptographic hash, a digital fingerprint, made by hashing the block header twice through the SHA256 algorithm. Note that the block hash is not actually included inside the block’s data structure, neither when the block is transmitted on the network, nor when it is stored on a node’s persistence storage as part of the blockchain.
+
+**The Genesis Block**
+The first block in the blockchain is called the genesis block and was created in 2009. Every node always starts with a blockchain of at least one block because the genesis block is statically encoded within the bitcoin client software, such that it cannot be altered.
+
+The genesis block contains a hidden message within it. The coinbase transaction input contains the text “The Times 03/Jan/2009 Chancellor on brink of second bailout for banks.” This message was intended to offer proof of the earliest date this block was created, by referencing the headline of the British newspaper The Times. It also serves as a tongue-in-cheek reminder of the importance of an independent monetary system, with bitcoin’s launch occurring at the same time as an unprecedented worldwide monetary crisis. The message was embedded in the first block by Satoshi Nakamoto, bitcoin’s creator.
+
+**Merkle Trees**
+Each block in the bitcoin blockchain contains a summary of all the transactions in the block using a merkle tree.
+
+Merkle trees are used in bitcoin to summarize all the transactions in a block, producing an overall digital fingerprint of the entire set of transactions, providing a very efficient process to verify whether a transaction is included in a block. A merkle tree is constructed by recursively hashing pairs of nodes until there is only one hash, called the root, or merkle root. The cryptographic hash algorithm used in bitcoin’s merkle trees is SHA256 applied twice, also known as double-SHA256.
+
+When N data elements are hashed and summarized in a merkle tree, you can check to see if any one data element is included in the tree with at most 2*log2(N) calculations, making this a very efficient data structure.
+
+The merkle tree is constructed bottom-up. In the following example, we start with four transactions, A, B, C, and D, which form the leaves of the merkle tree, as shown in Figure 9-2. The transactions are not stored in the merkle tree; rather, their data is hashed and the resulting hash is stored in each leaf node as H_A, H_B, H_C, and H_D:
+
+```
+H_A = SHA256(SHA256(Transaction A))
+ ```
+
+Consecutive pairs of leaf nodes are then summarized in a parent node, by concatenating the two hashes and hashing them together. For example, to construct the parent node HAB, the two 32-byte hashes of the children are concatenated to create a 64-byte string. That string is then double-hashed to produce the parent node’s hash:
+
+```
+H_AB = SHA256(SHA256(H_A + H_B))
+ ```
+
+The process continues until there is only one node at the top, the node known as the merkle root. That 32-byte hash is stored in the block header and summarizes all the data in all four transactions. Figure 9-2 shows how the root is calculated by pair-wise hashes of the nodes.
+
+Because the merkle tree is a binary tree, it needs an even number of leaf nodes. If there is an odd number of transactions to summarize, the last transaction hash will be duplicated to create an even number of leaf nodes, also known as a balanced tree.
+
+To prove that a specific transaction is included in a block, a node only needs to produce log2(N) 32-byte hashes, constituting an authentication path or merkle path connecting the specific transaction to the root of the tree. This allows bitcoin nodes to efficiently produce paths of 10 or 12 hashes (320–384 bytes), which can provide proof of a single transaction out of more than a thousand transactions in a megabyte-size block.
+
+![markle-tree.png](/images/download_c41a8ddf3e.png)
+
+A node can prove that a transaction K is included in the block by producing a merkle path that is only four 32-byte hashes long (128 bytes total). The path consists of the four hashes (shown with a shaded background) H_L, H_IJ, H_MNOP, and H_ABCDEFGH. With those four hashes provided as an authentication path, any node can prove that H_K (with a black background at the bottom of the diagram) is included in the merkle root by computing four additional pair-wise hashes H_KL, H_IJKL, H_IJKLMNOP, and the merkle tree root (outlined in a dashed line in the diagram)
+
+![merkle-path.png](/images/merkle_path_b5362a781a.png)
+
+**Merkle Trees and Simplified Payment Verification (SPV)**
+Merkle trees are used extensively by SPV nodes. SPV nodes don’t have all transactions and do not download full blocks, just block headers. In order to verify that a transaction is included in a block, without having to download all the transactions in the block, they use an authentication path, or merkle path.
+
+Consider, for example, an SPV node that is interested in incoming payments to an address contained in its wallet. The SPV node will establish a bloom filter (see “Bloom Filters”) on its connections to peers to limit the transactions received to only those containing addresses of interest. When a peer sees a transaction that matches the bloom filter, it will send that block using a merkleblock message. The merkleblock message contains the block header as well as a merkle path that links the transaction of interest to the merkle root in the block. The SPV node can use this merkle path to connect the transaction to the block and verify that the transaction is included in the block. The SPV node also uses the block header to link the block to the rest of the blockchain. The combination of these two links, between the transaction and block, and between the block and blockchain, proves that the transaction is recorded in the blockchain. All in all, the SPV node will have received less than a kilobyte of data for the block header and merkle path, an amount of data that is more than a thousand times less than a full block.
+
+**Bitcoin’s Test Blockchains**
+Testnet is the name of the test blockchain, network, and currency that is used for testing purposes. The testnet is a fully featured live P2P network, with wallets, test bitcoins (testnet coins), mining, and all the other features of mainnet.  There are really only two differences: testnet coins are meant to be worthless and mining difficulty should be low enough that anyone can mine testnet coins relatively easily (keeping them worthless).
+
+Any software development that is intended for production use on bitcoin’s mainnet should first be tested on testnet with test coins. This protects both the developers from monetary losses due to bugs and the network from unintended behavior due to bugs.
+
+Regtest, which stands for “Regression Testing,” is a Bitcoin Core feature that allows you to create a local blockchain for testing purposes. Unlike testnet, which is a public and shared test blockchain, the regtest blockchains are intended to be run as closed systems for local testing. You launch a regtest blockchain from scratch, creating a local genesis block. You may add other nodes to the network, or run it with a single node only to test the Bitcoin Core software.
+
+You can use the test blockchains to establish a development pipeline. Test your code locally on a regtest as you develop it. Once you are ready to try it on a public network, switch to testnet to expose your code to a more dynamic environment with more diversity of code and applications. Finally, once you are confident your code works as expected, switch to mainnet to deploy it in production.
+
+## Mining and Consensus
+
+The word “mining” is somewhat misleading. By evoking the extraction of precious metals, it focuses our attention on the reward for mining, the new bitcoin created in each block. Although mining is incentivized by this reward, the primary purpose of mining is not the reward or the generation of new coins. If you view mining only as the process by which coins are created, you are mistaking the means (incentives) as the goal of the process. Mining is the mechanism that underpins the decentralized clearinghouse, by which transactions are validated and cleared. Mining is the invention that makes bitcoin special, a decentralized security mechanism that is the basis for P2P digital cash.
+
+Mining secures the bitcoin system and enables the emergence of network-wide consensus without a central authority. The reward of newly minted coins and transaction fees is an incentive scheme that aligns the actions of miners with the security of the network, while simultaneously implementing the monetary supply.
+
+The maximum amount of newly created bitcoin a miner can add to a block decreases approximately every four years (or precisely every 210,000 blocks). It started at 50 bitcoin per block in January of 2009 and halved to 25 bitcoin per block in November of 2012. It halved again to 12.5 bitcoin in July 2016. Based on this formula, bitcoin mining rewards decrease exponentially until approximately the year 2140, when all bitcoin (20.99999998 million) will have been issued. After 2140, no new bitcoin will be issued and bitcoin mining will be incentivized only by transaction fees.
+
+To understand mining and consensus, we will follow Alice’s transaction as it is received and added to a block by Jing’s mining equipment. Then we will follow the block as it is mined, added to the blockchain, and accepted by the bitcoin network through the process of emergent consensus.
+
+<accordion>Deflationary Money<accordion>The most important and debated consequence of fixed and diminishing monetary issuance is that the currency tends to be inherently deflationary. Deflation is the phenomenon of appreciation of value due to a mismatch in supply and demand that drives up the value (and exchange rate) of a currency. The opposite of inflation, price deflation, means that the money has more purchasing power over time.
+
+Many economists argue that a deflationary economy is a disaster that should be avoided at all costs. That is because in a period of rapid deflation, people tend to hoard money instead of spending it, hoping that prices will fall. Such a phenomenon unfolded during Japan’s “Lost Decade,” when a complete collapse of demand pushed the currency into a deflationary spiral.
+
+Bitcoin experts argue that deflation is not bad per se. Rather, deflation is associated with a collapse in demand because that is the only example of deflation we have to study. In a fiat currency with the possibility of unlimited printing, it is very difficult to enter a deflationary spiral unless there is a complete collapse in demand and an unwillingness to print money. Deflation in bitcoin is not caused by a collapse in demand, but by a predictably constrained supply.
+
+The positive aspect of deflation, of course, is that it is the opposite of inflation. Inflation causes a slow but inevitable debasement of currency, resulting in a form of hidden taxation that punishes savers in order to bail out debtors (including the biggest debtors, governments themselves). Currencies under government control suffer from the moral hazard of easy debt issuance that can later be erased through debasement at the expense of savers.
+
+It remains to be seen whether the deflationary aspect of the currency is a problem when it is not driven by rapid economic retraction, or an advantage because the protection from inflation and debasement far outweighs the risks of deflation
+
+**Decentralized Consensus**
+But how can everyone in the network agree on a single universal “truth” about who owns what, without having to trust anyone? All traditional payment systems depend on a trust model that has a central authority providing a clearinghouse service, basically verifying and clearing all transactions. Bitcoin has no central authority, yet somehow every full node has a complete copy of a public ledger that it can trust as the authoritative record. The blockchain is not created by a central authority, but is assembled independently by every node in the network. Somehow, every node in the network, acting on information transmitted across insecure network connections, can arrive at the same conclusion and assemble a copy of the same public ledger as everyone else. This chapter examines the process by which the bitcoin network achieves global consensus without central authority.
+
+Satoshi Nakamoto’s main invention is the decentralized mechanism for emergent consensus. Emergent, because consensus is not achieved explicitly—there is no election or fixed moment when consensus occurs. Instead, consensus is an emergent artifact of the asynchronous interaction of thousands of independent nodes, all following simple rules. All the properties of bitcoin, including currency, transactions, payments, and the security model that does not depend on central authority or trust, derive from this invention.
+
+Bitcoin’s decentralized consensus emerges from the interplay of four processes that occur independently on nodes across the network:
+
+- Independent verification of each transaction, by every full node, based on a comprehensive list of criteria.
+- Independent aggregation of those transactions into new blocks by mining nodes, coupled with demonstrated computation through a Proof-of-Work algorithm.
+- Independent verification of the new blocks by every node and assembly into a chain.
+- Independent selection, by every node, of the chain with the most cumulative computation demonstrated through Proof-of-Work.
+
+Before forwarding transactions to its neighbors, every bitcoin node that receives a transaction will first verify the transaction. This ensures that only valid transactions are propagated across the network, while invalid transactions are discarded at the first node that encounters them.
+
+Each node verifies every transaction against a long checklist of criteria:
+
+- The transaction’s syntax and data structure must be correct.
+- Neither lists of inputs or outputs are empty.
+- The transaction size in bytes is less than MAX_BLOCK_SIZE.
+- Each output value, as well as the total, must be within the allowed range of values (less than 21m coins, more than the dust threshold).
+- None of the inputs have hash=0, N=–1 (coinbase transactions should not be relayed).
+- nLocktime is equal to INT_MAX, or nLocktime and nSequence values are satisfied according to MedianTimePast.
+- The transaction size in bytes is greater than or equal to 100.
+- The number of signature operations (SIGOPS) contained in the transaction is less than the signature operation limit.
+- The unlocking script (scriptSig) can only push numbers on the stack, and the locking script (scriptPubkey) must match isStandard forms (this rejects “nonstandard” transactions).
+- A matching transaction in the pool, or in a block in the main branch, must exist.
+- For each input, if the referenced output exists in any other transaction in the pool, the transaction must be rejected.
+- For each input, look in the main branch and the transaction pool to find the referenced output transaction. If the output transaction is missing for any input, this will be an orphan transaction. Add to the orphan transactions pool, if a matching transaction is not already in the pool.
+- For each input, if the referenced output transaction is a coinbase output, it must have at least COINBASE_MATURITY (100) confirmations.
+- For each input, the referenced output must exist and cannot already be spent.
+- Using the referenced output transactions to get input values, check that each input value, as well as the sum, are in the allowed range of values (less than 21m coins, more than 0).
+- Reject if the sum of input values is less than sum of output values.
+- Reject if transaction fee would be too low (minRelayTxFee) to get into an empty block.
+- The unlocking scripts for each input must validate against the corresponding output locking scripts.
+
+Note that the conditions change over time, to address new types of denial-of-service attacks or sometimes to relax the rules so as to include more types of transactions.
+
+By independently verifying each transaction as it is received and before propagating it, every node builds a pool of valid (but unconfirmed) transactions known as the transaction pool, memory pool, or mempool.
+
+**Aggregating Transactions into Blocks**
+Jing earns bitcoin by running a “mining rig,” which is a specialized computer-hardware system designed to mine bitcoin. Jing’s specialized mining hardware is connected to a server running a full bitcoin node. Unlike Jing, some miners mine without a full node.
+
+After validating transactions, a bitcoin node will add them to the memory pool, or transaction pool, where transactions await until they can be included (mined) into a block. Jing’s node collects, validates, and relays new transactions just like any other node. Unlike other nodes, however, Jing’s node will then aggregate these transactions into a candidate block.
+
+Jing’s mining node maintains a local copy of the blockchain. By the time Alice buys the cup of coffee, Jing’s node has assembled a chain up to block 277,314. Jing’s node is listening for transactions, trying to mine a new block and also listening for blocks discovered by other nodes. As Jing’s node is mining, it receives block 277,315 through the bitcoin network. The arrival of this block signifies the end of the competition for block 277,315 and the beginning of the competition to create block 277,316.
+
+During the previous the minutes, while Jing’s node was searching for a solution to block 277,315, it was also collecting transactions in preparation for the next block. By now it has collected a few hundred transactions in the memory pool. Upon receiving block 277,315 and validating it, Jing’s node will also compare it against all the transactions in the memory pool and remove any that were included in block 277,315. Whatever transactions remain in the memory pool are unconfirmed and are waiting to be recorded in a new block.
+
+Jing’s node immediately constructs a new empty block, a candidate for block 277,316. This block is called a candidate block because it is not yet a valid block, as it does not contain a valid Proof-of-Work. The block becomes valid only if the miner succeeds in finding a solution to the Proof-of-Work algorithm.
+
+When Jing’s node aggregates all the transactions from the memory pool, the new candidate block has 418 transactions with total transaction fees of 0.09094928 bitcoin.
+
+The first transaction in any block is a special transaction, called a coinbase transaction. This transaction is constructed by Jing’s node and contains his reward for the mining effort.
+
+Jing’s node creates the coinbase transaction as a payment to his own wallet: “Pay Jing’s address 3.34094928 bitcoin.” The total amount of reward that Jing collects for mining a block is the sum of the coinbase reward (3.25 new bitcoin) and the transaction fees (0.09094928) from all the transactions included in the block.
+
+The coinbase transaction has a special format. Instead of a transaction input specifying a previous UTXO to spend, it has a “coinbase” input:
+
+Transaction Hash - 32 bytes - All bits are zero: Not a transaction hash reference.
+Output Index - 4 bytes - All bits are ones: 0xFFFFFFFF.
+Coinbase Data Size - 1–9 bytes - Length of the coinbase data, from 2 to 100 bytes.
+Coinbase Data - Variable - Arbitrary data used for extra nonce and mining tags. In v2 blocks; must begin with block height.
+Sequence Number - 4 bytes - Set to 0xFFFFFFFF.
+
+In a coinbase transaction, the first two fields are set to values that do not represent a UTXO reference. Instead of a “transaction hash,” the first field is filled with 32 bytes all set to zero. The “output index” is filled with 4 bytes all set to 0xFF (255 decimal). The “Unlocking Script” (scriptSig) is replaced by coinbase data. Except for the first few bytes, the rest of the coinbase data can be used by miners in any way they want.
+
+In the genesis block, for example, Satoshi Nakamoto added the text “The Times 03/Jan/2009 Chancellor on brink of second bailout for banks” in the coinbase data, using it as a proof of the date and to convey a message.
+
+The first few bytes of the coinbase used to be arbitrary, but that is no longer the case. As per BIP-34, version-2 blocks (blocks with the version field set to 2) must contain the block height index as a script “push” operation in the beginning of the coinbase field.
+
+In block 277,316 we see that the coinbase (see Example 10-4), which is in the unlocking script or scriptSig field of the transaction input, contains the hexadecimal value 03443b0403858402062f503253482f. Let’s decode this value. 
+
+The first byte, 03, instructs the script execution engine to push the next three bytes onto the script stack. The next three bytes, 0x443b04, are the block height encoded in little-endian format (backward, least-significant byte first). Reverse the order of the bytes and the result is 0x043b44, which is 277,316 in decimal.
+
+The next few hexadecimal digits (0385840206) are used to encode an extra nonce, or random value, used to find a suitable Proof-of-Work solution.
+
+The final part of the coinbase data (2f503253482f) is the ASCII-encoded string /P2SH/, which indicates that the mining node that mined this block supports the P2SH improvement defined in BIP-16. The introduction of the P2SH capability required signaling by miners to endorse either BIP-16 or BIP-17. Those endorsing the BIP-16 implementation were to include /P2SH/ in their coinbase data. Those endorsing the BIP-17 implementation of P2SH were to include the string p2sh/CHV in their coinbase data. The BIP-16 was elected as the winner, and many miners continued including the string /P2SH/ in their coinbase to indicate support for this feature.
+
+SegWit transactions will be looked at below.
+
+**Constructing the Block Header**
+At the time that block 277,316 was mined, the version number describing the block structure is version 2, which is encoded in little-endian format in 4 bytes as 0x02000000.
+
+Next, the mining node needs to add the hash of the previous block.
+
+The next step is to summarize all the transactions with a merkle tree, in order to add the merkle root to the block header.
+
+Jing’s mining node will then add a 4-byte timestamp.
+
+Jing’s node then fills in the target, which defines the required Proof-of-Work to make this a valid block. The target is stored in the block as a “target bits” metric, which is a mantissa-exponent encoding of the target.
+
+The final field is the nonce, which is initialized to zero.
+
+With all the other fields filled, the block header is now complete and the process of mining can begin.
+
+**Mining the Block**
+The goal is now to find a value for the nonce that results in a block header hash that is less than the target. The mining node will need to test billions or trillions of nonce values before a nonce is found that satisfies the requirement. The hash function’s result cannot be determined in advance, nor can a pattern be created that will produce a specific hash value. This feature of hash functions means that the only way to produce a hash result matching a specific target is to try again and again, randomly modifying the input until the desired hash result appears by chance.
+
+A hash algorithm takes an arbitrary-length data input and produces a fixed-length deterministic result, a digital fingerprint of the input. For any specific input, the resulting hash will always be the same and can be easily calculated and verified by anyone implementing the same hash algorithm. The key characteristic of a cryptographic hash algorithm is that it is computationally infeasible to find two different inputs that produce the same fingerprint (known as a collision). As a corollary, it is also virtually impossible to select an input in such a way as to produce a desired fingerprint, other than trying random inputs.
+
+The number used as a variable in such a scenario is called a nonce. The nonce is used to vary the output of a cryptographic function, in this case to vary the SHA256 fingerprint of the phrase.
+
+To make a challenge out of this algorithm, let’s set a target: find a phrase that produces a hexadecimal hash that starts with a zero. If the output of the hash function is evenly distributed we would expect to find a result with a 0 as the hexadecimal prefix once every 16 hashes (one out of 16 hexadecimal digits 0 through F). In numerical terms, that means finding a hash value that is less than 0x1000000000000000000000000000000000000000000000000000000000000000. We call this threshold the target and the goal is to find a hash that is numerically less than the target. If we decrease the target, the task of finding a hash that is less than the target becomes more and more difficult.
+
+To give a simple analogy, imagine a game where players throw a pair of dice repeatedly, trying to throw less than a specified target. In the first round, the target is 12. Unless you throw double-six, you win. In the next round the target is 11. Players must throw 10 or less to win, again an easy task. Let’s say a few rounds later the target is down to 5. Now, more than half the dice throws will exceed the target and therefore be invalid. It takes exponentially more dice throws to win, the lower the target gets. Eventually, when the target is 2 (the minimum possible), only one throw out of every 36, or 2% of them, will produce a winning result.
+
+From the perspective of an observer who knows that the target of the dice game is 2, if someone has succeeded in casting a winning throw it can be assumed that they attempted, on average, 36 throws. In other words, one can estimate the amount of work it takes to succeed from the difficulty imposed by the target. When the algorithm is a based on a deterministic function such as SHA256, the input itself constitutes proof that a certain amount of work was done to produce a result below the target. Hence, Proof-of-Work.
+
+**Target Representation**
+We saw that the block contains the target, in a notation called “target bits” or just “bits,” which in block 277,316 has the value of 0x1903a30c. This notation expresses the Proof-of-Work target as a coefficient/exponent format, with the first two hexadecimal digits for the exponent and the next six hex digits as the coefficient. In this block, therefore, the exponent is 0x19 and the coefficient is 0x03a30c.
+
+The formula to calculate the difficulty target from this representation is:
+
+```
+target = coefficient * 2^(8 * (exponent – 3))
+ ```
+
+Using that formula, and the difficulty bits value 0x1903a30c, we get:
+
+```
+target = 0x03a30c * 2^(0x08 * (0x19 - 0x03))^
+target = 0x03a30c * 2^(0x08 * 0x16)^
+target = 0x03a30c * 2^0xB0^
+ ```
+
+which in decimal is:
+
+```
+target = 238,348 * 2^176^
+target = 22,829,202,948,393,929,850,749,706,076,701,368,331,072,452,018,388,575,715,328
+ ```
+
+switching back to hexadecimal:
+
+```
+target = 0x0000000000000003A30C00000000000000000000000000000000000000000000
+ ```
+
+This means that a valid block for height 277,316 is one that has a block header hash that is less than the target. In binary that number must have more than 60 leading bits set to zero. With this level of difficulty, a single miner processing 1 trillion hashes per second (1 terahash per second or 1 TH/sec) would only find a solution once every 8,496 blocks or once every 59 days, on average.
+
+**Retargeting to Adjust Difficulty**
+Bitcoin’s blocks are generated every 10 minutes, on average. This is bitcoin’s heartbeat and underpins the frequency of currency issuance and the speed of transaction settlement. It has to remain constant not just over the short term, but over a period of many decades. Over this time, it is expected that computer power will continue to increase at a rapid pace. Furthermore, the number of participants in mining and the computers they use will also constantly change. To keep the block generation time at 10 minutes, the difficulty of mining must be adjusted to account for these changes. In fact, the Proof-of-Work target is a dynamic parameter that is periodically adjusted to meet a 10-minute block interval goal. In simple terms, the target is set so that the current mining power will result in a 10-minute block interval.
+
+Retargeting occurs automatically and on every node independently. Every 2,016 blocks, all nodes retarget the Proof-of-Work. The equation for retargeting measures the time it took to find the last 2,016 blocks and compares that to the expected time of 20,160 minutes (2,016 blocks times the desired 10-minute block interval). The ratio between the actual timespan and desired timespan is calculated and a proportionate adjustment (up or down) is made to the target.
+
+To avoid extreme volatility in the difficulty, the retargeting adjustment must be less than a factor of four (4) per cycle. If the required target adjustment is greater than a factor of four, it will be adjusted by a factor of 4 and not more. Any further adjustment will be accomplished in the next retargeting period because the imbalance will persist through the next 2,016 blocks. Therefore, large discrepancies between hashing power and difficulty might take several 2,016 block cycles to balance out.
+
+Note that the target is independent of the number of transactions or the value of transactions. This means that the amount of hashing power and therefore electricity expended to secure bitcoin is also entirely independent of the number of transactions. Bitcoin can scale up, achieve broader adoption, and remain secure without any increase in hashing power from today’s level. The increase in hashing power represents market forces as new miners enter the market to compete for the reward. As long as enough hashing power is under the control of miners acting honestly in pursuit of the reward, it is enough to prevent “takeover” attacks and, therefore, it is enough to secure bitcoin.
+
+The difficulty of mining is closely related to the cost of electricity and the exchange rate of bitcoin vis-a-vis the currency used to pay for electricity. High-performance mining systems are about as efficient as possible with the current generation of silicon fabrication, converting electricity into hashing computation at the highest rate possible. The primary influence on the mining market is the price of one kilowatt-hour of electricity in bitcoin, because that determines the profitability of mining and therefore the incentives to enter or exit the mining market.
+
+**Successfully Mining the Block**
+As we saw earlier, Jing’s node has constructed a candidate block and prepared it for mining. Jing has several hardware mining rigs with application-specific integrated circuits, where hundreds of thousands of integrated circuits run the SHA256 algorithm in parallel at incredible speeds. Next, the mining node running on Jing’s desktop transmits the block header to his mining hardware, which starts testing trillions of nonces per second.
+
+Almost 11 minutes after starting to mine block 277,316, one of the hardware mining machines finds a solution and sends it back to the mining node. When inserted into the block header, the nonce 4,215,469,401 produces a block hash of:
+
+```
+0000000000000002a7bbd25a417c0374cc55261021e8a9ca74442b01284f0569
+ ```
+
+which is less than the target.
+
+Immediately, Jing’s mining node transmits the block to all its peers. They receive, validate, and then propagate the new block. As the block ripples out across the network, each node adds it to its own copy of the blockchain, extending it to a new height of 277,316 blocks. As mining nodes receive and validate the block, they abandon their efforts to find a block at the same height and immediately start computing the next block in the chain, using Jing’s block as the “parent.” By building on top of Jing’s newly discovered block, the other miners are essentially “voting” with their mining power and endorsing Jing’s block and the chain it extends.
+
+The independent validation of each new block by every node on the network ensures that the miners cannot cheat. In previous sections we saw how miners get to write a transaction that awards them the new bitcoin created within the block and claim the transaction fees. Why don’t miners write themselves a transaction for a thousand bitcoin instead of the correct reward? Because every node validates blocks according to the same rules. An invalid coinbase transaction would make the entire block invalid, which would result in the block being rejected and, therefore, that transaction would never become part of the ledger. The miners have to construct a perfect block, based on the shared rules that all nodes follow, and mine it with a correct solution to the Proof-of-Work. To do so, they expend a lot of electricity in mining, and if they cheat, all the electricity and effort is wasted. This is why independent validation is a key component of decentralized consensus.
+
+**Assembling and Selecting Chains of Blocks**
+The final step in bitcoin’s decentralized consensus mechanism is the assembly of blocks into chains and the selection of the chain with the most Proof-of-Work. Once a node has validated a new block, it will then attempt to assemble a chain by connecting the block to the existing blockchain.
+
+Nodes maintain three sets of blocks: those connected to the main blockchain, those that form branches off the main blockchain (secondary chains), and finally, blocks that do not have a known parent in the known chains (orphans). Invalid blocks are rejected as soon as any one of the validation criteria fails and are therefore not included in any chain.
+
+The “main chain” at any time is whichever valid chain of blocks has the most cumulative Proof-of-Work associated with it. Under most circumstances this is also the chain with the most blocks in it, unless there are two equal-length chains and one has more Proof-of-Work. The main chain will also have branches with blocks that are “siblings” to the blocks on the main chain. These blocks are valid but not part of the main chain. They are kept for future reference, in case one of those chains is extended to exceed the main chain in work. In the next section (“Blockchain Forks”), we will see how secondary chains occur as a result of an almost simultaneous mining of blocks at the same height.
+
+When a new block is received, a node will try to slot it into the existing blockchain. The node will look at the block’s “previous block hash” field, which is the reference to the block’s parent. Then, the node will attempt to find that parent in the existing blockchain. Most of the time, the parent will be the “tip” of the main chain, meaning this new block extends the main chain. For example, the new block 277,316 has a reference to the hash of its parent block 277,315. Most nodes that receive 277,316 will already have block 277,315 as the tip of their main chain and will therefore link the new block and extend that chain.
+
+Sometimes, as we will see in “Blockchain Forks”, the new block extends a chain that is not the main chain. In that case, the node will attach the new block to the secondary chain it extends and then compare the work of the secondary chain to the main chain. If the secondary chain has more cumulative work than the main chain, the node will reconverge on the secondary chain, meaning it will select the secondary chain as its new main chain, making the old main chain a secondary chain. If the node is a miner, it will now construct a block extending this new, longer, chain.
+
+If a valid block is received and no parent is found in the existing chains, that block is considered an “orphan.” Orphan blocks are saved in the orphan block pool where they will stay until their parent is received. Once the parent is received and linked into the existing chains, the orphan can be pulled out of the orphan pool and linked to the parent, making it part of a chain. Orphan blocks usually occur when two blocks that were mined within a short time of each other are received in reverse order (child before parent).
+
+By selecting the greatest-cumulative-work valid chain, all nodes eventually achieve network-wide consensus. Temporary discrepancies between chains are resolved eventually as more work is added, extending one of the possible chains. Mining nodes “vote” with their mining power by choosing which chain to extend by mining the next block. When they mine a new block and extend the chain, the new block itself represents their vote.
+
+**Blockchain Forks**
+Because the blockchain is a decentralized data structure, different copies of it are not always consistent. Blocks might arrive at different nodes at different times, causing the nodes to have different perspectives of the blockchain. To resolve this, each node always selects and attempts to extend the chain of blocks that represents the most Proof-of-Work, also known as the longest chain or greatest cumulative work chain. By summing the work recorded in each block in a chain, a node can calculate the total amount of work that has been expended to create that chain. As long as all nodes select the greatest-cumulative-work chain, the global bitcoin network eventually converges to a consistent state. Forks occur as temporary inconsistencies between versions of the blockchain, which are resolved by eventual reconvergence as more blocks are added to one of the forks.
+
+In the next few diagrams, we follow the progress of a “fork” event across the network. The diagram is a simplified representation of the bitcoin network. For illustration purposes, different blocks are shown as different shapes (star, triangle, upside-down triangle, rhombus), spreading across the network. Each node in the network is represented as a circle
+
+Each node has its own perspective of the global blockchain. As each node receives blocks from its neighbors, it updates its own copy of the blockchain, selecting the greatest-cumulative-work chain. For illustration purposes, each node contains a shape that represents the block that it believes is currently the tip of the main chain. So, if you see a star shape in the node, that means that the star block is the tip of the main chain, as far as that node is concerned.
+
+![download.png](/images/download_d3aa27d2de.png)
+
+A “fork” occurs whenever there are two candidate blocks competing to form the longest blockchain. This occurs under normal conditions whenever two miners solve the Proof-of-Work algorithm within a short period of time from each other. As both miners discover a solution for their respective candidate blocks, they immediately broadcast their own “winning” block to their immediate neighbors who begin propagating the block across the network. Each node that receives a valid block will incorporate it into its blockchain, extending the blockchain by one block. If that node later sees another candidate block extending the same parent, it connects the second candidate on a secondary chain. As a result, some nodes will “see” one candidate block first, while other nodes will see the other candidate block and two competing versions of the blockchain will emerge.
+
+![download.png](/images/download_2a95651189.png)
+
+As the two blocks propagate, some nodes receive block “triangle” first and some receive block “upside-down triangle” first. The network splits into two different perspectives of the blockchain; one side topped with a triangle block, the other with the upside-down-triangle block.
+
+![fork-3.png](/images/download_3159f5308f.png)
+
+Neither side is “correct,” or “incorrect.” Both are valid perspectives of the blockchain. Only in hindsight will one prevail, based on how these two competing chains are extended by additional work.
+
+Mining nodes whose perspective resembles Node X will immediately begin mining a candidate block that extends the chain with “triangle” as its tip. By linking “triangle” as the parent of their candidate block, they are voting with their hashing power. Their vote supports the chain that they have elected as the main chain.
+
+Any mining node whose perspective resembles Node Y will start building a candidate node with “upside-down triangle” as its parent, extending the chain that they believe is the main chain. And so, the race begins again.
+
+Forks are almost always resolved within one block. While part of the network’s hashing power is dedicated to building on top of “triangle” as the parent, another part of the hashing power is focused on building on top of “upside-down triangle.” Even if the hashing power is almost evenly split, it is likely that one set of miners will find a solution and propagate it before the other set of miners have found any solutions. Let’s say, for example, that the miners building on top of “triangle” find a new block “rhombus” that extends the chain (e.g., star-triangle-rhombus). They immediately propagate this new block and the entire network sees it as a valid solution.
+
+All nodes that had chosen “triangle” as the winner in the previous round will simply extend the chain one more block. The nodes that chose “upside-down triangle” as the winner, however, will now see two chains: star-triangle-rhombus and star-upside-down-triangle. The chain star-triangle-rhombus is now longer (more cumulative work) than the other chain. As a result, those nodes will set the chain star-triangle-rhombus as the main chain and change the star-upside-down-triangle chain to a secondary chain. This is a chain reconvergence, because those nodes are forced to revise their view of the blockchain to incorporate the new evidence of a longer chain. Any miners working on extending the chain star-upside-down-triangle will now stop that work because their candidate block is an “orphan,” as its parent “upside-down-triangle” is no longer on the longest chain. The transactions within “upside-down-triangle” are re-inserted in the mempool for inclusion in the next block, because the block they were in is no longer in the main chain. The entire network reconverges on a single blockchain star-triangle-rhombus, with “rhombus” as the last block in the chain. All miners immediately start working on candidate blocks that reference “rhombus” as their parent to extend the star-triangle-rhombus chain.
+
+![fork-4.png](/images/fork_4_228c900c6a.png)
+
+![fork-5.png](/images/fork_5_2338d7a4eb.png)
+
+It is theoretically possible for a fork to extend to two blocks, if two blocks are found almost simultaneously by miners on opposite “sides” of a previous fork. However, the chance of that happening is very low. Whereas a one-block fork might occur every day, a two-block fork occurs at most once every few weeks.
+
+Bitcoin’s block interval of 10 minutes is a design compromise between fast confirmation times (settlement of transactions) and the probability of a fork. A faster block time would make transactions clear faster but lead to more frequent blockchain forks, whereas a slower block time would decrease the number of forks but make settlement slower.
+
+**The Extra Nonce Solution**
+Since 2012, bitcoin mining has evolved to resolve a fundamental limitation in the structure of the block header. In the early days of bitcoin, a miner could find a block by iterating through the nonce until the resulting hash was below the target. As difficulty increased, miners often cycled through all 4 billion values of the nonce without finding a block. However, this was easily resolved by updating the block timestamp to account for the elapsed time. Because the timestamp is part of the header, the change would allow miners to iterate through the values of the nonce again with different results.  Once mining hardware exceeded 4 GH/sec, however, this approach became increasingly difficult because the nonce values were exhausted in less than a second. As ASIC mining equipment started pushing and then exceeding the TH/sec hash rate, the mining software needed more space for nonce values in order to find valid blocks. The timestamp could be stretched a bit, but moving it too far into the future would cause the block to become invalid. A new source of “change” was needed in the block header. The solution was to use the coinbase transaction as a source of extra nonce values. Because the coinbase script can store between 2 and 100 bytes of data, miners started using that space as extra nonce space, allowing them to explore a much larger range of block header values to find valid blocks. The coinbase transaction is included in the merkle tree, which means that any change in the coinbase script causes the merkle root to change. Eight bytes of extra nonce, plus the 4 bytes of “standard” nonce allow miners to explore a total 296 (8 followed by 28 zeros) possibilities per second without having to modify the timestamp. If, in the future, miners could run through all these possibilities, they could then modify the timestamp. There is also more space in the coinbase script for future expansion of the extra nonce space.
+
+**Mining Pools**
+In this highly competitive environment, individual miners working alone (also known as solo miners) don’t stand a chance. The likelihood of them finding a block to offset their electricity and hardware costs is so low that it represents a gamble, like playing the lottery. Even the fastest consumer ASIC mining system cannot keep up with commercial systems that stack tens of thousands of these chips in giant warehouses near hydroelectric powerstations. Miners now collaborate to form mining pools, pooling their hashing power and sharing the reward among thousands of participants. By participating in a pool, miners get a smaller share of the overall reward, but typically get rewarded every day, reducing uncertainty.
+
+Let’s look at a specific example. Assume a miner has purchased mining hardware with a combined hashing rate of  <a lot> gigahashes per second (GH/s), or <a lot> TH/s. Let's imagine, this equipment costs approximately $2,500 USD. The hardware consumes 1375 watts (1.3 kW) of electricity when running, 32 kW-hours a day, at a cost of $1 to $2 per day at very low electricity rates. At current bitcoin difficulty, the miner will be able to solo mine a block approximately once every 4 years. If the miner does find a single block in that timeframe, the payout of 12.5 bitcoin, at approximately $1,000 per bitcoin, will result in a single payout of $12,500, which will not even cover the entire cost of the hardware and the electricity consumed over the time period, leaving a net loss of approximately $1,000. However, the chance of finding a block in a 4-year period depends on the miner’s luck. He might find two blocks in 4 years and make a very large profit. Or he might not find a block for 5 years and suffer a bigger financial loss. Even worse, the difficulty of the bitcoin Proof-of-Work algorithm is likely to go up significantly over that period, at the current rate of growth of hashing power, meaning the miner has, at most, one year to break even before the hardware is effectively obsolete and must be replaced by more powerful mining hardware. If this miner participates in a mining pool, instead of waiting for a once-in-four-years $12,500 windfall, he will be able to earn approximately $50 to $60 per week. The regular payouts from a mining pool will help him amortize the cost of hardware and electricity over time without taking an enormous risk. The hardware will still be obsolete in one or two years and the risk is still high, but the revenue is at least regular and reliable over that period. Financially this only makes sense at very low electricity cost (less than 1 cent per kW) and only at very large scale.
+
+Mining pools coordinate many hundreds or thousands of miners, over specialized pool-mining protocols. The individual miners configure their mining equipment to connect to a pool server, after creating an account with the pool. Their mining hardware remains connected to the pool server while mining, synchronizing their efforts with the other miners. Thus, the pool miners share the effort to mine a block and then share in the rewards.
+
+Successful blocks pay the reward to a pool bitcoin address, rather than individual miners. The pool server will periodically make payments to the miners’ bitcoin addresses, once their share of the rewards has reached a certain threshold. Typically, the pool server charges a percentage fee of the rewards for providing the pool-mining service.
+
+Miners participating in a pool split the work of searching for a solution to a candidate block, earning “shares” for their mining contribution. The mining pool sets a higher target (lower difficulty) for earning a share, typically more than 1,000 times easier than the bitcoin network’s target. When someone in the pool successfully mines a block, the reward is earned by the pool and then shared with all miners in proportion to the number of shares they contributed to the effort.
+
+Pools are open to any miner, big or small, professional or amateur. A pool will therefore have some participants with a single small mining machine, and others with a garage full of high-end mining hardware. Some will be mining with a few tens of a kilowatt of electricity, others will be running a data center consuming a megawatt of power. How does a mining pool measure the individual contributions, so as to fairly distribute the rewards, without the possibility of cheating? The answer is to use bitcoin’s Proof-of-Work algorithm to measure each pool miner’s contribution, but set at a lower difficulty so that even the smallest pool miners win a share frequently enough to make it worthwhile to contribute to the pool. By setting a lower difficulty for earning shares, the pool measures the amount of work done by each miner. Each time a pool miner finds a block header hash that is less than the pool target, she proves she has done the hashing work to find that result. More importantly, the work to find shares contributes, in a statistically measurable way, to the overall effort to find a hash lower than the bitcoin network’s target. Thousands of miners trying to find low-value hashes will eventually find one low enough to satisfy the bitcoin network target.
+
+Let’s return to the analogy of a dice game. If the dice players are throwing dice with a goal of throwing less than four (the overall network difficulty), a pool would set an easier target, counting how many times the pool players managed to throw less than eight. When pool players throw less than eight (the pool share target), they earn shares, but they don’t win the game because they don’t achieve the game target (less than four). The pool players will achieve the easier pool target much more often, earning them shares very regularly, even when they don’t achieve the harder target of winning the game. Every now and then, one of the pool players will throw a combined dice throw of less than four and the pool wins. Then, the earnings can be distributed to the pool players based on the shares they earned. Even though the target of eight-or-less wasn’t winning, it was a fair way to measure dice throws for the players, and it occasionally produces a less-than-four throw.
+
+Similarly, a mining pool will set a (higher and easier) pool target that will ensure that an individual pool miner can find block header hashes that are less than the pool target often, earning shares. Every now and then, one of these attempts will produce a block header hash that is less than the bitcoin network target, making it a valid block and the whole pool wins.
+
+**Managed pools**
+Most mining pools are “managed,” meaning that there is a company or individual running a pool server. The owner of the pool server is called the pool operator, and he charges pool miners a percentage fee of the earnings.
+
+Pool miners connect to the pool server using a mining protocol such as Stratum (STM) or GetBlockTemplate (GBT). An older standard called GetWork (GWK) has been mostly obsolete since late 2012, because it does not easily support mining at hash rates above 4 GH/s. Both the STM and GBT protocols create block templates that contain a template of a candidate block header. The pool server constructs a candidate block by aggregating transactions, adding a coinbase transaction (with extra nonce space), calculating the merkle root, and linking to the previous block hash. The header of the candidate block is then sent to each of the pool miners as a template. Each pool miner then mines using the block template, at a higher (easier) target than the bitcoin network target, and sends any successful results back to the pool server to earn shares.
+
+**Peer-to-peer mining pool (P2Pool)**
+Managed pools create the possibility of cheating by the pool operator, who might direct the pool effort to double-spend transactions or invalidate blocks. Furthermore, centralized pool servers represent a single-point-of-failure. If the pool server is down or is slowed by a denial-of-service attack, the pool miners cannot mine. In 2011, to resolve these issues of centralization, a new pool mining method was proposed and implemented: P2Pool, a peer-to-peer mining pool without a central operator.
+
+P2Pool works by decentralizing the functions of the pool server, implementing a parallel blockchain-like system called a share chain. A share chain is a blockchain running at a lower difficulty than the bitcoin blockchain. The share chain allows pool miners to collaborate in a decentralized pool by mining shares on the share chain at a rate of one share block every 30 seconds. Each of the blocks on the share chain records a proportionate share reward for the pool miners who contribute work, carrying the shares forward from the previous share block. When one of the share blocks also achieves the bitcoin network target, it is propagated and included on the bitcoin blockchain, rewarding all the pool miners who contributed to all the shares that preceded the winning share block. Essentially, instead of a pool server keeping track of pool miner shares and rewards, the share chain allows all pool miners to keep track of all shares using a decentralized consensus mechanism like bitcoin’s blockchain consensus mechanism.
+
+P2Pool mining is more complex than pool mining because it requires that the pool miners run a dedicated computer with enough disk space, memory, and internet bandwidth to support a full bitcoin node and the P2Pool node software. P2Pool miners connect their mining hardware to their local P2Pool node, which simulates the functions of a pool server by sending block templates to the mining hardware. On P2Pool, individual pool miners construct their own candidate blocks, aggregating transactions much like solo miners, but then mine collaboratively on the share chain. P2Pool is a hybrid approach that has the advantage of much more granular payouts than solo mining, but without giving too much control to a pool operator like managed pools.
+
+Even though P2Pool reduces the concentration of power by mining pool operators, it is conceivably vulnerable to 51% attacks against the share chain itself. A much broader adoption of P2Pool does not solve the 51% attack problem for bitcoin itself. Rather, P2Pool makes bitcoin more robust overall, as part of a diversified mining ecosystem.
+
+**Consensus Attacks**
+Bitcoin’s consensus mechanism is, at least theoretically, vulnerable to attack by miners (or pools) that attempt to use their hashing power to dishonest or destructive ends. As we saw, the consensus mechanism depends on having a majority of the miners acting honestly out of self-interest. However, if a miner or group of miners can achieve a significant share of the mining power, they can attack the consensus mechanism so as to disrupt the security and availability of the bitcoin network.
+
+It is important to note that consensus attacks can only affect future consensus, or at best, the most recent past (tens of blocks). Bitcoin’s ledger becomes more and more immutable as time passes. While in theory, a fork can be achieved at any depth, in practice, the computing power needed to force a very deep fork is immense, making old blocks practically immutable. Consensus attacks also do not affect the security of the private keys and signing algorithm (ECDSA). A consensus attack cannot steal bitcoin, spend bitcoin without signatures, redirect bitcoin, or otherwise change past transactions or ownership records. Consensus attacks can only affect the most recent blocks and cause denial-of-service disruptions on the creation of future blocks.
+
+One attack scenario against the consensus mechanism is called the “51% attack.” In this scenario a group of miners, controlling a majority (51%) of the total network’s hashing power, collude to attack bitcoin. With the ability to mine the majority of the blocks, the attacking miners can cause deliberate “forks” in the blockchain and double-spend transactions or execute denial-of-service attacks against specific transactions or addresses. A fork/double-spend attack is where the attacker causes previously confirmed blocks to be invalidated by forking below them and re-converging on an alternate chain. With sufficient power, an attacker can invalidate six or more blocks in a row, causing transactions that were considered immutable (six confirmations) to be invalidated. Note that a double-spend can only be done on the attacker’s own transactions, for which the attacker can produce a valid signature. Double-spending one’s own transactions is profitable if by invalidating a transaction the attacker can get an irreversible exchange payment or product without paying for it.
+
+Let’s examine a practical example of a 51% attack. In the first chapter, we looked at a transaction for a cup of coffee. The cafe owner, is willing to accept payment for cups of coffee without waiting for confirmation (mining in a block), because the risk of a double-spend on a cup of coffee is low in comparison to the convenience of rapid customer service. This is similar to the practice of coffee shops that accept credit card payments without a signature for amounts below $25, because the risk of a credit-card chargeback is low while the cost of delaying the transaction to obtain a signature is comparatively larger. In contrast, selling a more expensive item for bitcoin runs the risk of a double-spend attack, where the buyer broadcasts a competing transaction that spends the same inputs (UTXO) and cancels the payment to the merchant. A double-spend attack can happen in two ways: either before a transaction is confirmed, or if the attacker takes advantage of a blockchain fork to undo several blocks. A 51% attack allows attackers to double-spend their own transactions in the new chain, thus undoing the corresponding transaction in the old chain.
+
+In our example, malicious attacker Mallory goes to Carol’s gallery and purchases a beautiful triptych painting depicting Satoshi Nakamoto as Prometheus. Carol sells “The Great Fire” paintings for $250,000 in bitcoin to Mallory. Instead of waiting for six or more confirmations on the transaction, Carol wraps and hands the paintings to Mallory after only one confirmation. Mallory works with an accomplice, Paul, who operates a large mining pool, and the accomplice launches a 51% attack as soon as Mallory’s transaction is included in a block. Paul directs the mining pool to remine the same block height as the block containing Mallory’s transaction, replacing Mallory’s payment to Carol with a transaction that double-spends the same input as Mallory’s payment. The double-spend transaction consumes the same UTXO and pays it back to Mallory’s wallet, instead of paying it to Carol, essentially allowing Mallory to keep the bitcoin. Paul then directs the mining pool to mine an additional block, so as to make the chain containing the double-spend transaction longer than the original chain (causing a fork below the block containing Mallory’s transaction). When the blockchain fork resolves in favor of the new (longer) chain, the double-spent transaction replaces the original payment to Carol. Carol is now missing the three paintings and also has no bitcoin payment. Throughout all this activity, Paul’s mining pool participants might remain blissfully unaware of the double-spend attempt, because they mine with automated miners and cannot monitor every transaction or block.
+
+To protect against this kind of attack, a merchant selling large-value items must wait at least six confirmations before giving the product to the buyer. Alternatively, the merchant should use an escrow multisignature account, again waiting for several confirmations after the escrow account is funded. The more confirmations elapse, the harder it becomes to invalidate a transaction with a 51% attack. For high-value items, payment by bitcoin will still be convenient and efficient even if the buyer has to wait 24 hours for delivery, which would correspond to approximately 144 confirmations.
+
+In addition to a double-spend attack, the other scenario for a consensus attack is to deny service to specific bitcoin participants (specific bitcoin addresses). An attacker with a majority of the mining power can simply ignore specific transactions. If they are included in a block mined by another miner, the attacker can deliberately fork and remine that block, again excluding the specific transactions. This type of attack can result in a sustained denial-of-service against a specific address or set of addresses for as long as the attacker controls the majority of the mining power.
+
+Despite its name, the 51% attack scenario doesn’t actually require 51% of the hashing power. In fact, such an attack can be attempted with a smaller percentage of the hashing power. The 51% threshold is simply the level at which such an attack is almost guaranteed to succeed. A consensus attack is essentially a tug-of-war for the next block and the “stronger” group is more likely to win. With less hashing power, the probability of success is reduced, because other miners control the generation of some blocks with their “honest” mining power. One way to look at it is that the more hashing power an attacker has, the longer the fork he can deliberately create, the more blocks in the recent past he can invalidate, or the more blocks in the future he can control. Security research groups have used statistical modeling to claim that various types of consensus attacks are possible with as little as 30% of the hashing power.
+
+The massive increase of total hashing power has arguably made bitcoin impervious to attacks by a single miner. There is no possible way for a solo miner to control more than a small percentage of the total mining power. However, the centralization of control caused by mining pools has introduced the risk of for-profit attacks by a mining pool operator. The pool operator in a managed pool controls the construction of candidate blocks and also controls which transactions are included. This gives the pool operator the power to exclude transactions or introduce double-spend transactions. If such abuse of power is done in a limited and subtle way, a pool operator could conceivably profit from a consensus attack without being noticed.
+
+Not all attackers will be motivated by profit, however. One potential attack scenario is where an attacker intends to disrupt the bitcoin network without the possibility of profiting from such disruption. A malicious attack aimed at crippling bitcoin would require enormous investment and covert planning, but could conceivably be launched by a well-funded, most likely state-sponsored, attacker. Alternatively, a well-funded attacker could attack bitcoin’s consensus by simultaneously amassing mining hardware, compromising pool operators, and attacking other pools with denial-of-service. All of these scenarios are theoretically possible, but increasingly impractical as the bitcoin network’s overall hashing power continues to grow exponentially.
+
+Undoubtedly, a serious consensus attack would erode confidence in bitcoin in the short term, possibly causing a significant price decline. However, the bitcoin network and software are constantly evolving, so consensus attacks would be met with immediate countermeasures by the bitcoin community, making bitcoin hardier, stealthier, and more robust than ever.
+
+**Changing the Consensus Rules**
+The rules of consensus determine the validity of transactions and blocks. These rules are the basis for collaboration between all bitcoin nodes and are responsible for the convergence of all local perspectives into a single consistent blockchain across the entire network.
+
+While the consensus rules are invariable in the short term and must be consistent across all nodes, they are not invariable in the long term. In order to evolve and develop the bitcoin system, the rules have to change from time to time to accommodate new features, improvements, or bug fixes. Unlike traditional software development, however, upgrades to a consensus system are much more difficult and require coordination between all the participants.
+
+**Hard Forks**
+In “Blockchain Forks” we looked at how the bitcoin network may briefly diverge, with two parts of the network following two different branches of the blockchain for a short time. We saw how this process occurs naturally, as part of the normal operation of the network and how the network reconverges on a common blockchain after one or more blocks are mined.
+
+There is another scenario in which the network may diverge into following two chains: a change in the consensus rules. This type of fork is called a hard fork, because after the fork the network does not reconverge onto a single chain. Instead, the two chains evolve independently. Hard forks occur when part of the network is operating under a different set of consensus rules than the rest of the network. This may occur because of a bug or because of a deliberate change in the implementation of the consensus rules.
+
+Hard forks can be used to change the rules of consensus, but they require coordination between all participants in the system. Any nodes that do not upgrade to the new consensus rules are unable to participate in the consensus mechanism and are forced onto a separate chain at the moment of the hard fork. Thus, a change introduced by a hard fork can be thought of as not “forward compatible,” in that nonupgraded systems can no longer process the new consensus rules.
+
+Let’s examine the mechanics of a hard fork with a specific example.
+
+The image shows a blockchain with two forks. At block height 4, a one-block fork occurs. This is the type of spontaneous fork we saw in “Blockchain Forks”. With the mining of block 5, the network reconverges on one chain and the fork is resolved.
+
+![hard-fork.png](/images/hard_fork_10ac6db343.png)
+
+Later, however, at block height 6, a hard fork occurs. Let’s assume that a new implementation of the client is released with a change in the consensus rules. Starting on block height 7, miners running this new implementation will accept a new type of digital signature, let’s call it a “Smores” signature, that is not ECDSA based. Immediately after, a node running the new implementation creates a transaction that contains a Smores signature and a miner with the updated software mines block 7b containing this transaction.
+
+Any node or miner that has not upgraded the software to validate Smores signatures is now unable to process block 7b. From their perspective, both the transaction that contained a Smores signature and block 7b that contained that transaction are invalid, because they are evaluating them based upon the old consensus rules. These nodes will reject the transaction and the block and will not propagate them. Any miners that are using the old rules will not accept block 7b and will continue to mine a candidate block whose parent is block 6. In fact, miners using the old rules may not even receive block 7b if all the nodes they are connected to are also obeying the old rules and therefore not propagating the block. Eventually, they will be able to mine block 7a, which is valid under the old rules and does not contain any transactions with Smores signatures.
+
+The two chains continue to diverge from this point. Miners on the “b” chain will continue to accept and mine transactions containing Smores signatures, while miners on the “a” chain will continue to ignore these transactions. Even if block 8b does not contain any Smores-signed transactions, the miners on the “a” chain cannot process it. To them it appears to be an orphan block, as its parent “7b” is not recognized as a valid block.
+
+For software developers, the term “fork” has another meaning, adding confusion to the term “hard fork.” In open source software, a fork occurs when a group of developers choose to follow a different software roadmap and start a competing implementation of an open source project. We’ve already discussed two circumstances that will lead to a hard fork: a bug in the consensus rules and a deliberate modification of the consensus rules. In the case of a deliberate change to the consensus rules, a software fork precedes the hard fork. However, for this type of hard fork to occur, a new software implementation of the consensus rules must be developed, adopted, and launched.
+
+Examples of software forks that have attempted to change consensus rules include Bitcoin XT, Bitcoin Classic, and Bitcoin Unlimited. However, none of these software forks have resulted in a hard fork. While a software fork is a necessary precondition, it is not in itself sufficient for a hard fork to occur. For a hard fork to occur, the competing implementation must be adopted and the new rules activated, by miners, wallets, and intermediary nodes. Conversely, there are numerous alternative implementations of Bitcoin Core, and even software forks, that do not change the consensus rules and barring a bug, can coexist on the network and interoperate without causing a hard fork.
+
+Consensus rules may differ in obvious and explicit ways, in the validation of transactions or blocks. The rules may also differ in more subtle ways, in the implementation of the consensus rules as they apply to bitcoin scripts or cryptographic primitives such as digital signatures. Finally, the consensus rules may differ in unanticipated ways because of implicit consensus constraints imposed by system limitations or implementation details. An example of the latter was seen in the unanticipated , which was caused by a limitation in the Berkley DB implementation used to store blocks.
+
+Conceptually, we can think of a hard fork as developing in four stages: a software fork, a network fork, a mining fork, and a chain fork.
+
+The process begins when an alternative implementation of the client, with modified consensus rules, is created by developers.
+
+When this forked implementation is deployed in the network, a certain percentage of miners, wallet users, and intermediate nodes may adopt and run this implementation. A resulting fork will depend upon whether the new consensus rules apply to blocks, transactions, or some other aspect of the system. If the new consensus rules pertain to transactions, then a wallet creating a transaction under the new rules may precipitate a network fork, followed by a hard fork when the transaction is mined into a block. If the new rules pertain to blocks, then the hard fork process will begin when a block is mined under the new rules.
+
+First, the network will fork. Nodes based on the original implementation of the consensus rules will reject any transactions and blocks that are created under the new rules. Furthermore, the nodes following the original consensus rules will temporarily ban and disconnect from any nodes that are sending them these invalid transactions and blocks. As a result, the network will partition into two: old nodes will only remain connected to old nodes and new nodes will only be connected to new nodes. A single transaction or block based on the new rules will ripple through the network and result in the partition into two networks.
+
+Once a miner using the new rules mines a block, the mining power and chain will also fork. New miners will mine on top of the new block, while old miners will mine a separate chain based on the old rules. The partitioned network will make it so that the miners operating on separate consensus rules won’t likely receive each other’s blocks, as they are connected to two separate networks.
+
+s miners diverge into mining two different chains, the hashing power is split between the chains. The mining power can be split in any proportion between the two chains. The new rules may only be followed by a minority, or by the vast majority of the mining power.
+
+Let’s assume, for example, an 80%–20% split, with the majority of the mining power using the new consensus rules. Let’s also assume that the fork occurs immediately after a retargeting period.
+
+The two chains would each inherit the difficulty from the retargeting period. The new consensus rules would have 80% of the previously available mining power committed to them. From the perspective of this chain, the mining power has suddenly declined by 20% vis-a-vis the previous period. Blocks will be found on average every 12 minutes, representing the 20% decline in mining power available to extend this chain. This rate of block issuance will continue (barring any changes in hashing power) until 2016 blocks are mined, which will take approximately 24,192 minutes (at 12 minutes per block), or 16.8 days. After 16.8 days, a retarget will occur and the difficulty will adjust (reduced by 20%) to produce 10-minute blocks again, based on the reduced amount of hashing power in this chain.
+
+The minority chain, mining under the old rules with only 20% of the hashing power, will face a much more difficult task. On this chain, blocks will now be mined every 50 minutes on average. The difficulty will not be adjusted for 2016 blocks, which will take 100,800 minutes, or approximately 10 weeks to mine. Assuming a fixed capacity per block, this will also result in a reduction of transaction capacity by a factor of 5, as there are fewer blocks per hour available to record transactions.
+
+**Soft Forks**
+Not all consensus rule changes cause a hard fork. Only consensus changes that are forward-incompatible cause a fork. If the change is implemented in such a way that an unmodified client still sees the transaction or block as valid under the previous rules, the change can happen without a fork.
+
+The term soft fork was introduced to distinguish this upgrade method from a “hard fork.” In practice, a soft fork is not a fork at all. A soft fork is a forward-compatible change to the consensus rules that allows unupgraded clients to continue to operate in consensus with the new rules.
+
+One aspect of soft forks that is not immediately obvious is that soft fork upgrades can only be used to constrain the consensus rules, not to expand them. In order to be forward compatible, transactions and blocks created under the new rules must be valid under the old rules too, but not vice versa. The new rules can only limit what is valid; otherwise, they will trigger a hard fork when rejected under the old rules.
+
+Soft forks can be implemented in a number of ways—the term does not define a single method, rather a set of methods that all have one thing in common: they don’t require all nodes to upgrade or force nonupgraded nodes out of consensus.
+
+A number of soft forks have been implemented in bitcoin, based on the re-interpretation of NOP opcodes. Bitcoin Script had ten opcodes reserved for future use, NOP1 through NOP10. Under the consensus rules, the presence of these opcodes in a script is interpreted as a null-potent operator, meaning they have no effect. Execution continues after the NOP opcode as if it wasn’t there.
+
+A soft fork therefore can modify the semantics of a NOP code to give it new meaning. For example, BIP-65 (CHECKLOCKTIMEVERIFY) reinterpreted the NOP2 opcode. Clients implementing BIP-65 interpret NOP2 as OP_CHECKLOCKTIMEVERIFY and impose an absolute locktime consensus rule on UTXO that contain this opcode in their locking scripts. This change is a soft fork because a transaction that is valid under BIP-65 is also valid on any client that is not implementing (ignorant of) BIP-65. To the old clients, the script contains an NOP code, which is ignored.
+
+**Soft Fork Signaling with Block Version**
+Since soft forks allow unmodified clients to continue to operate within consensus, the mechanism for “activating” a soft fork is through miners signaling readiness: a majority of miners must agree that they are ready and willing to enforce the new consensus rules. To coordinate their actions, there is a signaling mechanism that allows them to show their support for a consensus rule change. This mechanism was introduced with the activation of BIP-34 in March 2013 and replaced by the activation of BIP-9 in July 2016.
+
+The first implementation, in BIP-34, used the block version field to allow miners to signal readiness for a specific consensus rule change. Prior to BIP-34, the block version was set to “1” by convention not enforced by consensus.
+
+BIP-34 defined a consensus rule change that required the coinbase field (input) of the coinbase transaction to contain the block height. Prior to BIP-34, the coinbase could contain any arbitrary data the miners chose to include. After activation of BIP-34, valid blocks had to contain a specific block-height at the beginning of the coinbase and be identified with a version number greater than or equal to “2.”
+
+To signal the change and activation of BIP-34, miners set the block version to “2,” instead of “1.” This did not immediately make version “1” blocks invalid. Once activated, version “1” blocks would become invalid and all version “2” blocks would be required to contain the block height in the coinbase to be valid.
+
+BIP-34 defined a two-step activation mechanism, based on a rolling window of 1000 blocks. A miner would signal his or her individual readiness for BIP-34 by constructing blocks with “2” as the version number. Strictly speaking, these blocks did not yet have to comply with the new consensus rule of including the block-height in the coinbase transaction because the consensus rule had not yet been activated. The consensus rules activated in two steps:
+
+- If 75% (750 of the most recent 1000 blocks) are marked with version “2,” then version “2” blocks must contain block height in the coinbase transaction or they are rejected as invalid. Version “1” blocks are still accepted by the network and do not need to contain block-height. The old and new consensus rules coexist during this period.
+- When 95% (950 of the most recent 1000 blocks) are version “2,” version “1” blocks are no longer considered valid. Version “2” blocks are valid only if they contain the block-height in the coinbase (as per the previous threshold). Thereafter, all blocks must comply with the new consensus rules, and all valid blocks must contain block-height in the coinbase transaction.
+
+After successful signaling and activation under the BIP-34 rules, this mechanism was used twice more to activate soft forks:
+
+BIP-66 Strict DER Encoding of Signatures was activated by BIP-34 style signaling with a block version “3” and invalidating version “2” blocks.
+
+BIP-65 CHECKLOCKTIMEVERIFY was activated by BIP-34 style signaling with a block version “4” and invalidating version “3” blocks.
+
+After the activation of BIP-65, the signaling and activation mechanism of BIP-34 was retired and replaced with the BIP-9.
+
+it was replaced because it had several limitations:
+
+- By using the integer value of the block version, only one soft fork could be activated at a time, so it required coordination between soft fork proposals and agreement on their prioritization and sequencing.
+- Furthermore, because the block version was incremented, the mechanism didn’t offer a straightforward way to reject a change and then propose a different one. If old clients were still running, they could mistake signaling for a new change as signaling for the previously rejected change.
+- Each new change irrevocably reduced the available block versions for future changes.
+
+BIP-9 interprets the block version as a bit field instead of an integer. Because the block version was originally used as an integer, versions 1 through 4, only 29 bits remain available to be used as a bit field. This leaves 29 bits that can be used to independently and simultaneously signal readiness on 29 different proposals.
+
+BIP-9 also sets a maximum time for signaling and activation. This way miners don’t need to signal forever. If a proposal is not activated within the TIMEOUT period (defined in the proposal), the proposal is considered rejected. The proposal may be resubmitted for signaling with a different bit, renewing the activation period.
+
+Furthermore, after the TIMEOUT has passed and a feature has been activated or rejected, the signaling bit can be reused for another feature without confusion. Therefore, up to 29 changes can be signaled in parallel and after TIMEOUT the bits can be “recycled” to propose new changes.
+
+Unlike BIP-34, BIP-9 counts activation signaling in whole intervals based on the difficulty retarget period of 2016 blocks. For every retarget period, if the sum of blocks signaling for a proposal exceeds 95% (1916 of 2016), the proposal will be activated one retarget period later.
+
+Proposals start in the DEFINED state, once their parameters are known (defined) in the bitcoin software. For blocks with MTP after the start time, the proposal state transitions to STARTED. If the voting threshold is exceeded within a retarget period and the timeout has not been exceeded, the proposal state transitions to LOCKED_IN. One retarget period later, the proposal becomes ACTIVE. Proposals remain in the ACTIVE state perpetually once they reach that state. If the timeout is elapsed before the voting threshold has been reached, the proposal state changes to FAILED, indicating a rejected proposal. REJECTED proposals remain in that state perpetually.

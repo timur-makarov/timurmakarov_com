@@ -1,0 +1,7 @@
+<div class="code-block-wrapper collapsible-code">
+    <div class="code-block-content">
+        {{ $result := transform.HighlightCodeBlock . }}
+        {{ $result.Wrapped }}
+    </div>
+    <button class="show-more-btn" onclick="toggleCodeBlock(this)" type="button">Show More</button>
+</div>
