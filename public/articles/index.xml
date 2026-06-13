@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 	<channel>
 		<title>Articles on Timur Makarov | Blockchain Software Engineer</title>
-		<link>http://localhost:1313/articles/</link>
+		<link>https://timurmakarov.com/articles/</link>
 		<description>Recent content in Articles on Timur Makarov | Blockchain Software Engineer</description>
 		<generator>Hugo</generator>
 		<language>en-us</language>
@@ -12,19 +12,19 @@
 		
 			<lastBuildDate>Wed, 14 Aug 2024 08:00:00 +0400</lastBuildDate>
 		
-			<atom:link href="http://localhost:1313/articles/index.xml" rel="self" type="application/rss+xml" />
+			<atom:link href="https://timurmakarov.com/articles/index.xml" rel="self" type="application/rss+xml" />
 			<item>
-				<title>Ethereum Execution Layer Specifications (pre-Amsterdam. June 10 2026)</title>
-				<link>http://localhost:1313/articles/ethereum-execution-layer-specifications/</link>
+				<title>Ethereum Execution Layer Specifications (Updated up to June 13 2026)</title>
+				<link>https://timurmakarov.com/articles/ethereum-execution-layer-specifications/</link>
 				<pubDate>Wed, 14 Aug 2024 08:00:00 +0400</pubDate>
-				<guid>http://localhost:1313/articles/ethereum-execution-layer-specifications/</guid>
+				<guid>https://timurmakarov.com/articles/ethereum-execution-layer-specifications/</guid>
 				<description>&lt;p&gt;This article supposes that you have some prior knowledge on what transactions, blocks, smart-contracts abstractly are. Here we will decipher &lt;a href=&#34;https://github.com/ethereum/execution-specs&#34;&gt;EELS&lt;/a&gt; of the Amsterdam fork line by line. Contains explanations for everything and they are provided and as we go.&lt;/p&gt;&#xA;&lt;p&gt;EELS implement validation rules for incoming blocks. And so here, in the code snippets, we&amp;rsquo;re not building a new block, we&amp;rsquo;re validation an existing one. But the rules for building one are the same, of course.&lt;/p&gt;</description>
 			</item>
 			<item>
 				<title>Bitcoin</title>
-				<link>http://localhost:1313/articles/bitcoin/</link>
+				<link>https://timurmakarov.com/articles/bitcoin/</link>
 				<pubDate>Thu, 01 Aug 2024 08:00:00 +0400</pubDate>
-				<guid>http://localhost:1313/articles/bitcoin/</guid>
+				<guid>https://timurmakarov.com/articles/bitcoin/</guid>
 				<description>&lt;p&gt;This article includes most of the information about Bitcoin. Rules, updates, features, Script language - everything you will encounter if you wish to more seriously engage with the Bitcoin network. Digging deeper would be reading the code and BIPs itself.&lt;/p&gt;&#xA;&lt;p&gt;This article describes a slightly older version of Bitcoin to help you see a bit bigger picture. Knowledge of  (e.g. SegWit, Taproot) can be easily laid on top of the knowledge in this article.&lt;/p&gt;</description>
 			</item>
 	</channel>
