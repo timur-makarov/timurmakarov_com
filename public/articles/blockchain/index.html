@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blockchain: An Inevitable Step Forward | Timur Makarov | Blockchain Software Engineer</title>
+    <link rel="stylesheet" href="/css/custom.css">
+    <script src="/js/main.js"></script>
     <style>
         * {
             margin: 0;
@@ -15,9 +17,9 @@
         body {
             font-family: sans-serif;
             line-height: 1.6;
-            max-width: 760px;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 2rem 0;
+            padding: 1rem;
             color: #333;
         }
 
@@ -25,11 +27,6 @@
             margin-bottom: 1rem;
             border-bottom: 1px solid #eee;
             padding-bottom: 1rem;
-        }
-
-        h1,
-        h2 {
-            color: #111;
         }
 
         h1 {
@@ -40,8 +37,12 @@
             margin-bottom: 1rem;
         }
 
-        .about-block {
-            margin-bottom: 3rem;
+        .text-block {
+            margin-bottom: 1rem;
+        }
+
+        .text-block p {
+            margin: 7px 0;
         }
 
         .article-list {
@@ -68,14 +69,30 @@
             margin-bottom: 1rem;
         }
 
-        .article-content p {
-            margin: 7px 0;
+        .article-content p,
+        .article-content ol,
+        .article-content ul {
+            margin-top: 7px;
         }
 
-        .article-content ul,
-        pre,
-        img {
-            margin: 14px 0;
+        .article-content p>strong:only-child {
+            display: block;
+            margin-top: 14px;
+            margin-bottom: -7px;
+        }
+
+        .article-content pre,
+        .article-content img {
+            margin: 14px 0 7px 0;
+        }
+
+        .article-content p>code,
+        .article-content li>code {
+            background-color: rgb(39, 40, 34);
+            color: rgb(248, 248, 242);
+            padding: 2px 4px;
+            border-radius: 4px;
+            word-break: keep-all;
         }
 
         .article-content pre {
@@ -86,6 +103,11 @@
             font-size: 0.85rem;
         }
 
+        .article-content ul ul {
+            padding-left: 1rem;
+            margin: 0;
+        }
+
         .article-content p {
             white-space: break-spaces;
         }
@@ -94,7 +116,17 @@
             width: 100%;
         }
 
-        .article-content h2 {
+        .article-content h2,
+        .article-content h3 {
+            margin-top: 2.5rem;
+            scroll-margin-top: 20px;
+        }
+
+        .article-content h4 {
+            margin-top: 1.5rem;
+        }
+
+        .article-content hr {
             margin-top: 1rem;
         }
 
@@ -110,17 +142,16 @@
 </head>
 
 <body>
-    
-
     <main>
         
 <article>
     <div class="article-header">
-        <h1>Blockchain: An Inevitable Step Forward</h2>
-            <div class="article-date">August 1, 2024</div>
+        <h1>Blockchain: An Inevitable Step Forward</h1>
+        <div class="article-date">August 1, 2024</div>
     </div>
     <section class="article-content">
-        <p>There are numerous companies and institutions whose sole purpose is to affirm that you own something. Whether it&rsquo;s proving ownership of property, verifying document authenticity, ensuring the legitimacy of financial transactions, or confirming intellectual property rights, these entities play a critical role in modern society. However, their methodologies are often slow, susceptible to errors, lack transparency, and are single points of failure. Most importantly, these entities struggle with gaining universal trust because human beings, who are prone to error, manipulation, bias, and having a bad day, maintain the integrity of the data.</p>
+        <h3 id="a-very-old-article-archived">A VERY OLD ARTICLE. ARCHIVED.</h3>
+<p>There are numerous companies and institutions whose sole purpose is to affirm that you own something. Whether it&rsquo;s proving ownership of property, verifying document authenticity, ensuring the legitimacy of financial transactions, or confirming intellectual property rights, these entities play a critical role in modern society. However, their methodologies are often slow, susceptible to errors, lack transparency, and are single points of failure. Most importantly, these entities struggle with gaining universal trust because human beings, who are prone to error, manipulation, bias, and having a bad day, maintain the integrity of the data.</p>
 <p>Blockchain technology tackles one of the fundamental problems of modern society: the need for unshakable trust in systems that manage and verify our critical data. By eliminating the fallible human element and creating a distributed, immutable ledger, blockchain offers an unparalleled method for ensuring data integrity.</p>
 <p>By the word &ldquo;Integrity&rdquo; here presupposes such concepts as: security, consistency, correctness, and absence of corruption and errors.</p>
 <p>This article does not describe any particular blockchain. This article only argues that the blockchain technology is an inevitable step forward.</p>

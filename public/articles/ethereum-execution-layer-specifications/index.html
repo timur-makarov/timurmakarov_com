@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en-us">
 
-<head>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethereum Execution Layer Specifications (Updated up to June 13 2026) | Timur Makarov | Blockchain Software Engineer</title>
+    <title>Ethereum Execution Layer Specifications (upd. up to 13 June 2026) | Timur Makarov | Blockchain Software Engineer</title>
     <link rel="stylesheet" href="/css/custom.css">
     <script src="/js/main.js"></script>
     <style>
@@ -146,7 +146,7 @@
         
 <article>
     <div class="article-header">
-        <h1>Ethereum Execution Layer Specifications (Updated up to June 13 2026)</h1>
+        <h1>Ethereum Execution Layer Specifications (upd. up to 13 June 2026)</h1>
         <div class="article-date">August 14, 2024</div>
     </div>
     <section class="article-content">
@@ -9755,7 +9755,7 @@ Miner fees are not deducted from the base transaction fees: <code>priority_fee_p
 </div><p>Essecially we just push these two values to their respected contracts at the start of processing the block so that the other contracts could retrieve this information.</p>
 <hr>
 <h4 id="execution-of-system-operations">Execution of System Operations</h4>
-<p><a href="https://eips.ethereum.org/EIPS/eip-7685">EIP-7685</a>. Essencialy we are ask specific contracts if there are any requests to perform something on the Consensus Layer, add them together and compute sha256 hash on them to add to it header (if we creating a block) or validate the header.</p>
+<p><a href="https://eips.ethereum.org/EIPS/eip-7685">EIP-7685</a>. Essentially we are ask specific contracts if there are any requests to perform something on the Consensus Layer, add them together and compute sha256 hash on them to add to it header (if we creating a block) or validate the header.</p>
 <div class="code-block-wrapper collapsible-code">
     <div class="code-block-content">
         
@@ -9896,7 +9896,7 @@ Miner fees are not deducted from the base transaction fees: <code>priority_fee_p
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> deposit_requests</span></span></code></pre></div>
     </div>
     <button class="show-more-btn" onclick="toggleCodeBlock(this)" type="button">Show More</button>
-</div><p>There are also withdrawals which come from the Consensus Layer to be executed on EL. They come with the block that passed to be validated.</p>
+</div><p>There are also withdrawals which come from the Consensus Layer to be executed on EL. They come with the block that passed to be validated. All the checks are performed there, here we&rsquo;re jsut executing them.</p>
 <div class="code-block-wrapper collapsible-code">
     <div class="code-block-content">
         

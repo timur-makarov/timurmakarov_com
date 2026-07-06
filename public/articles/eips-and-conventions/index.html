@@ -4,7 +4,7 @@
 <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> | Timur Makarov | Blockchain Software Engineer</title>
+    <title>EIPs | Timur Makarov | Blockchain Software Engineer</title>
     <link rel="stylesheet" href="/css/custom.css">
     <script src="/js/main.js"></script>
     <style>
@@ -126,6 +126,10 @@
             margin-top: 1.5rem;
         }
 
+        .article-content hr {
+            margin-top: 1rem;
+        }
+
         a {
             color: #007bff;
             text-decoration: none;
@@ -142,11 +146,54 @@
         
 <article>
     <div class="article-header">
-        <h1></h1>
-        <div class="article-date">January 1, 0001</div>
+        <h1>EIPs</h1>
+        <div class="article-date">June 8, 2026</div>
     </div>
     <section class="article-content">
+        <h3 id="address-and-the-checksum">Address and the Checksum</h3>
+<p><strong>Ethereum Addresses</strong>
+Ethereum addresses are unique identifiers that are derived from public keys</p>
+<div class="code-block-wrapper collapsible-code">
+    <div class="code-block-content">
         
+        <pre tabindex="0"><code>keccak256(&lt;public key&gt;) = 2a5bc342ed616b5ba5732269001d3f1ef827552ae1114027bd3ecf1f086ba0f9
+Address: 001d3f1ef827552ae1114027bd3ecf1f086ba0f9 (last 20 bytes)</code></pre>
+    </div>
+    <button class="show-more-btn" onclick="toggleCodeBlock(this)" type="button">Show More</button>
+</div><p>Most often you will see the address with the prefix 0x that indicates it&rsquo;s hexadecimal-encoded.</p>
+<p>Addresses for contracts derived with CREATE (older, much less used and less flexible opcode) or CREATE2 (allows users to send funds to a contract address even before it has been initialized on-chain, or to deploy identical contracts across different EVM-compatible blockchains at the exact same address, or to compute the address right in the code, which removes the need to be provided during the call of a function)</p>
+<div class="code-block-wrapper collapsible-code">
+    <div class="code-block-content">
+        
+        <pre tabindex="0"><code>CREATE: keccak256(rlp([sender, nonce]))
+CREATE2: keccak256(0xff ++ address ++ salt ++ keccak256(init_code))</code></pre>
+    </div>
+    <button class="show-more-btn" onclick="toggleCodeBlock(this)" type="button">Show More</button>
+</div><p>&ldquo;init_code&rdquo; is the code for initialization of a contract (setting up constants, the owner, etc) that returns runtime code (all the functions that you call) at the end.
+&ldquo;0xff&rdquo; is a special byte that prevents collision with addresses created by CREATE opcode. RLP will be discussed further and you will understand.
+More information - <a href="https://eips.ethereum.org/EIPS/eip-1014">https://eips.ethereum.org/EIPS/eip-1014</a></p>
+<p><strong>Hex Encoding with Checksum in Capitalization (EIP-55)</strong>
+By modifying the capitalization of the alphabetic characters in the address, we can convey a checksum that can be used to protect the integrity of the address against typing or reading mistakes. Wallets that do not support EIP-55 checksums simply ignore the fact that the address contains mixed capitalization, but those that do support it can validate it and detect errors with a 99.986% accuracy.</p>
+<p>EIP-55 is quite simple to implement. We take the Keccak-256 hash of the lowercase hexadecimal address. This hash acts as a digital fingerprint of the address, giving us a convenient checksum. Any small change in the input (the address) should cause a big change in the resulting hash (the checksum), allowing us to detect errors effectively. The hash of our address is then encoded in the capitalization of the address itself. Let’s break it down, step by step:</p>
+<p>(I) Hash the lowercase address, without the 0x prefix; (II) Capitalize each alphabetic address character if the corresponding hex digit of the hash is greater than or equal to 0x8.</p>
+<div class="code-block-wrapper collapsible-code">
+    <div class="code-block-content">
+        
+        <pre tabindex="0"><code>keccak256(&#34;001d3f1ef827552ae1114027bd3ecf1f086ba0f9&#34;)
+
+Address: 001d3f1ef827552ae1114027bd3ecf1f086ba0f9
+Hash:    23a69c1653e4ebbb619b0b2cb8a9bad49892a8b9695d9a19d8f673ca991deae1</code></pre>
+    </div>
+    <button class="show-more-btn" onclick="toggleCodeBlock(this)" type="button">Show More</button>
+</div><p>Our address contains an alphabetic character d in the fourth position. The fourth character of the hash is 6, which is less than 8. So, we leave the d lowercase. The next alphabetic character in our address is f, in the sixth position. The sixth character of the hexadecimal hash is c, which is greater than 8. Therefore, we capitalize the F in the address, and so on.</p>
+<div class="code-block-wrapper collapsible-code">
+    <div class="code-block-content">
+        
+        <pre tabindex="0"><code>Address with checksum: 001d3F1ef827552Ae1114027BD3ECF1f086bA0F9</code></pre>
+    </div>
+    <button class="show-more-btn" onclick="toggleCodeBlock(this)" type="button">Show More</button>
+</div><p>And when we want to send a transaction, for a wallet, to verify the entered address it just needs to be converted into lowercase, hashed and compared.</p>
+
     </section>
 </article>
 

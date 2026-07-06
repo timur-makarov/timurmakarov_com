@@ -1,8 +1,8 @@
 +++
 date = '2024-08-14T08:00:00+04:00'
 draft = false
-title = 'Ethereum Execution Layer Specifications (Updated up to June 13 2026)'
-description = "Compilation of knowledge on official EELS. Current version: pre-Amsterdam <br> Explanation of all the building blocks (EVM, RLP, Blob, BAL, Merkle Patricia Trie, etc.) and code"
+title = 'Ethereum Execution Layer Specifications (upd. up to 13 June 2026)'
+description = "Compilation of knowledge on official EELS. Current version: Amsterdam <br> Explanation of all the building blocks (EVM, RLP, Blob, BAL, Merkle Patricia Trie, etc.) and code"
 +++
 
 This article supposes that you have some prior knowledge on what transactions, blocks, smart-contracts abstractly are. Here we will decipher [EELS](https://github.com/ethereum/execution-specs) of the Amsterdam fork line by line. Contains explanations for everything and they are provided and as we go.
@@ -9689,7 +9689,7 @@ Essecially we just push these two values to their respected contracts at the sta
 
 #### Execution of System Operations
 
-[EIP-7685](https://eips.ethereum.org/EIPS/eip-7685). Essencialy we are ask specific contracts if there are any requests to perform something on the Consensus Layer, add them together and compute sha256 hash on them to add to it header (if we creating a block) or validate the header. 
+[EIP-7685](https://eips.ethereum.org/EIPS/eip-7685). Essentially we are ask specific contracts if there are any requests to perform something on the Consensus Layer, add them together and compute sha256 hash on them to add to it header (if we creating a block) or validate the header. 
 
 ```python
 def process_checked_system_transaction(
@@ -9830,7 +9830,7 @@ def parse_deposit_requests(block_output: BlockOutput) -> Bytes:
 
 ```
 
-There are also withdrawals which come from the Consensus Layer to be executed on EL. They come with the block that passed to be validated.
+There are also withdrawals which come from the Consensus Layer to be executed on EL. They come with the block that passed to be validated. All the checks are performed there, here we're jsut executing them.
 
 ```python
 def process_withdrawals(

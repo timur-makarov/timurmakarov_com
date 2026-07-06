@@ -1,7 +1,7 @@
 +++
 date = '2026-06-08T08:00:00+04:00'
 draft = true
-title = 'Ethereum Execution Layer Specifications (Amsterdam)'
+title = 'EIPs'
 description = "Compilation of knowledge on active EIPs and current conventions in Ethereum"
 +++
 
