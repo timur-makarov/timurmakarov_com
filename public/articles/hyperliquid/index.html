@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperliquid: Everything There Is To Know | Timur Makarov | Blockchain Software Engineer</title>
+    <link rel="stylesheet" href="/css/custom.css">
+    <script src="/js/main.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+            color: #333;
+        }
+
+        header {
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+        }
+
+        h2 {
+            margin-bottom: 1rem;
+        }
+
+        .text-block {
+            margin-bottom: 1rem;
+        }
+
+        .text-block p {
+            margin: 7px 0;
+        }
+
+        .article-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .article-item {
+            margin-bottom: 1.5rem;
+        }
+
+        .article-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .article-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .article-header {
+            margin-bottom: 1rem;
+        }
+
+        .article-content p,
+        .article-content ol,
+        .article-content ul {
+            margin-top: 7px;
+        }
+
+        .article-content p>strong:only-child {
+            display: block;
+            margin-top: 14px;
+            margin-bottom: -7px;
+        }
+
+        .article-content pre,
+        .article-content img {
+            margin: 14px 0 7px 0;
+        }
+
+        .article-content p>code,
+        .article-content li>code {
+            background-color: rgb(39, 40, 34);
+            color: rgb(248, 248, 242);
+            padding: 2px 4px;
+            border-radius: 4px;
+            word-break: keep-all;
+        }
+
+        .article-content pre {
+            overflow-x: scroll;
+            background-color: #efefef;
+            color: black;
+            padding: 5px;
+            font-size: 0.85rem;
+        }
+
+        .article-content ul ul {
+            padding-left: 1rem;
+            margin: 0;
+        }
+
+        .article-content p {
+            white-space: break-spaces;
+        }
+
+        .article-content img {
+            width: 100%;
+        }
+
+        .article-content h2,
+        .article-content h3 {
+            margin-top: 2.5rem;
+            scroll-margin-top: 20px;
+        }
+
+        .article-content h4 {
+            margin-top: 1.5rem;
+        }
+
+        .article-content hr {
+            margin-top: 1rem;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        
+<article>
+    <div class="article-header">
+        <h1>Hyperliquid: Everything There Is To Know</h1>
+        <div class="article-date">July 23, 2026</div>
+    </div>
+    <section class="article-content">
+        <p>The docs: <a href="https://hyperliquid.gitbook.io/hyperliquid-docs">https://hyperliquid.gitbook.io/hyperliquid-docs</a>
+Here is and will be updated once any new information is out the currently useful technical details of the Hyperliquid&rsquo;s features and non-trading decision.
+List of incidents: <a href="https://hyperliquid-co.gitbook.io/wiki/introduction/roadmap/incident">https://hyperliquid-co.gitbook.io/wiki/introduction/roadmap/incident</a></p>
+<h3 id="hypercore">HyperCore</h3>
+<p>Implementation of all the needed exchange primitives.</p>
+<h4 id="order-book">Order Book</h4>
+<p>HyperCore state includes an order book for each asset. The order book works similarly to that of centralized exchanges. Orders are added where price is an integer multiple of the tick size, and size is an integer multiple of lot size (i.e. strict rules for book records; for example, either 0.01 or 0.02, 2 records instead of scattering liquidity between the 2 prices, 0.00101, 0.00103 and so on). Orders are matched in price-time priority.</p>
+<p>Operations on order books for perp assets take a reference to the clearinghouse, as all positions and margin checks are handled there. Margin checks happen on the opening of a new order, and again for the resting side at the matching of each order. This ensures that the margining system is consistent despite oracle price fluctuations after the resting order is placed.</p>
+<p>One unique aspect of the Hyperliquid L1 is that the mempool and consensus logic are semantically aware of transactions that interact with HyperCore order books. Within a block, actions are sorted within each consensus batch (there are usually 1-2 consensus batches of actions in a block) as</p>
+<ul>
+<li>Actions that do not send GTC or IOC orders to any book <br>
+Before any trading happens, the network processes administrative and state-changing actions. This includes deposits, withdrawals, internal transfers, and funding rate payments. This ensures everyone&rsquo;s account balances are 100% accurate before the matching engine starts pairing buyers and sellers. You can&rsquo;t trade with funds that haven&rsquo;t mathematically hit your account yet.</li>
+<li>Cancels <br>
+If you send a request to cancel an existing order, the network processes it before any new trades are allowed to enter the book. This is a massive protection for market makers. If the market suddenly crashes, a market maker wants to cancel their buy orders so they don&rsquo;t get stuck buying an asset in freefall. By processing cancels before new orders, the protocol prevents predatory high-frequency traders from &ldquo;picking off&rdquo; outdated orders before the cancel can register.</li>
+<li>Actions that send at least one GTC or IOC <br>
+Trading requests. &ldquo;Modifies&rdquo; are treated as new orders. If you change the price or size of an existing order, the system treats it as a brand-new order, pushing you to the back of the time-priority line in Tier 3. You cannot modify an order to cut in line</li>
+</ul>
+<p>Within each category, actions are sorted in the order the block proposer (the validator leading that specific round) received them. It is a FIFO system within each category.</p>
+<hr>
+<h4 id="permissionless-spot-quote-assets">Permissionless spot quote assets</h4>
+<p>Becoming a spot quote asset is permissionless.
+The requirements for becoming a permissionless spot quote asset are as follows:</p>
+<ol>
+<li>Wei decimals of 8 and size decimals of 2</li>
+<li>Zero deployer fee share on the quote token</li>
+<li>200k HYPE staked, subject to the following slashing criteria based on validator voting:</li>
+</ol>
+<p>A peg mechanism to a price of 1 USD. A future network upgrade could increase the scope to other non-dollar stable assets</p>
+<p>QUOTE/USDC should have 100k USDC size on both sides within the price range from 0.998 to 1.002, inclusive
+QUOTE/USDC should have 1M USDC size on both sides within 0.99 and 1.01, inclusive
+HYPE/QUOTE should have 50k QUOTE size on both sides within a spread of 0.5%, inclusive</p>
+<p>The 200k HYPE staked by the deployer are subject to slashing based on validator vote for poor quality quote assets. Upon deployment, this stake is committed for 3 years, after which it can be unstaked. This gives builders and users some assurance when choosing a quote asset.</p>
+<p>For any of the conditions above, if there is a three-day period during which the condition is not satisfied for a majority of uniformly spaced 1 second samples, the quote asset will be considered slashable. Validators will vote on the amount to slash when such conditions are violated.</p>
+<hr>
+<h4 id="aqav2">AQAv2</h4>
+<p>AQAv2 will be a requirement for quote assets to be listed against HIP-4 and validator-operated perp markets on a future network upgrade. There is no trading fee or volume contribution benefit to AQAv2. Other quote assets will continue to be supported for other markets, including spot and HIP-3 perps.</p>
+<p>AQAv2 allows specification of a “technical deployer” and a “treasury deployer.” The treasury deployer will designate a treasury address which will share 100% of the AQA rate (the cost-adjusted onchain reference rate oracle) with the protocol through the onchain AQA mechanic. This is twice the rate of revenue share of the existing AQA spec. The treasury deployer must stake 500k HYPE, which is slashable if the treasury address does not have sufficient balance for onchain revenue to be deducted. The technical deployer must stake 500k HYPE and ensure reliable mint, redemption, and cross-chain transfer infrastructure for the aligned quote asset. Both treasury and technical deployers require 6 months minimum notice before ceasing operation, during which their stake is slashable for the commitments above. The activation of AQAv2 is by validator vote, after both deployers have staked and sent the authorization transactions from the staking accounts. Under AQAv2, the linked HyperEVM contract that connects to HyperCore will also rebalance with the treasury address. The HyperEVM balance corresponding to minted HyperCore tokens will be held in a ratio of 9:1 between the treasury address and technical deployer’s linked EVM contract address, respectively. Reserve yield revenue accrues in 30 day intervals based on the block on each UTC date, automatically sent to the Assistance Fund 8 days after each interval completes. In the event that there is insufficient balance to deduct from the system interest address <code>0x50...00 + {token_index}</code> , the treasury deployer&rsquo;s stake is eligible to be slashed at an interest rate of 2% per day. The 30 day intervals begin on the date of activation.</p>
+<hr>
+<h4 id="staking">Staking</h4>
+<p>HYPE staking on Hyperliquid happens within HyperCore. Just as USDC can be transferred between perps and spot accounts, HYPE can be transferred between spot and staking accounts.</p>
+<p>Within the staking account, HYPE may be staked to any number of validators. Here and in other docs, delegate and stake are used interchangeably, as Hyperliquid only supports delegated proof-of-stake.</p>
+<p>Each validator has a self-delegation requirement of 10k HYPE to become active. The self-delegation requirement is locked for one year. Any time that the self-delegation for a validator drops below 10k HYPE, the validator enters undelegate-only mode (i.e., where all future delegations to this validator are disabled), so the validator&rsquo;s total stake can only decrease going forward.</p>
+<p>Once active, validators produce blocks and receive rewards proportional to their total delegated stake. Validators may charge a commission to their delegators. This commission cannot be increased unless the new commission is less than or equal to 1%. This prevents scenarios where a validator attracts a large amount of stake and then raises the commission significantly to take advantage of unaware stakers.</p>
+<p>Delegations to a particular validator have a lockup duration of 1 day. After this lockup, delegations may be partially or fully undelegated at any time. Undelegated balances instantly reflect in staking account balance.</p>
+<p>Transfers from spot account to staking account are instant. However, transfers from staking account to spot account have a 7 day unstaking queue. Most other proof-of-stake chains have a similar mechanism, which ensures that large-scale consensus attacks are penalized by slashing or social layer mechanisms. There is currently no automatic slashing implemented. Each address may have at most 5 pending withdrawals in the unstaking queue.</p>
+<p>As an example, if you initiate a staking to spot transfer of 100 HYPE at 08:00:00 UTC on March 11 and a transfer of 50 HYPE at 09:00:00 UTC on March 12, the 100 HYPE transfer will be finalized at 08:00:01 UTC on March 18 and the 50 HYPE transfer will be finalized at 09:00:01 UTC on March 19.</p>
+<p>The staking reward rate formula is inspired by Ethereum, where the reward rate is inversely proportional to the square root of total HYPE staked. At 400M total HYPE staked, the reward rate is approximately 2.37% per year. Staking rewards come from the future emissions reserve.</p>
+<p>Rewards are accrued every minute and distributed to stakers every day. Rewards are redelegated automatically to the staked validator, i.e., compounded. Rewards are based on the minimum balance that a delegator has staked during each staking epoch (100k rounds, as explained below).</p>
+<p>Technical Details
+The notion of a quorum is essential to modern proof-of-stake consensus algorithms such as HyperBFT. A quorum is any set of validators that has more than ⅔ of the total stake in the network. The operating requirement of consensus is that a quorum of stake is honest (non-Byzantine). Therefore it is an essential responsibility of every staker to only delegate to trusted validators.</p>
+<p>HyperBFT consensus proceeds in rounds, which is a fundamental discrete bundle of transactions along with signatures from a quorum of validators. Each round may be committed after certain conditions are met, after which it is sent to the execution state for processing. A key property of the consensus algorithm is that all honest nodes agree on the ordered list of committed rounds.</p>
+<p>i.e. consensus and execution layers are separate, like ePBS in Ethereum.</p>
+<p>Rounds may result in a new execution state block. Execution blocks are indexed by a separate increasing counter called height. Height only increments on consensus rounds with at least one transaction.</p>
+<p>The validator set evolves in epochs of 100k rounds, which is approximately 90 minutes on mainnet. The validators and consensus stakes are static for each staking epoch.</p>
+<p>Validators may vote to jail peers that do not respond with adequate latency or frequency to the consensus messages of the voter. Upon receiving a quorum of jail votes, a validator becomes jailed and no longer participates in consensus. A jailed validator does not produce rewards for its delegators. A validator may unjail itself by diagnosing and fixing the causes, subject to onchain unjailing rate limits. Note that jailing is not the same as slashing, which is reserved for provably malicious behavior such as double-signing blocks at the same round.</p>
+<hr>
+<h4 id="multisig">Multisig</h4>
+<p>HyperCore supports native multi-sig actions. This allows multiple private keys to control a single account for additional security. Unlike other chains, multi-sig is available as a built-in primitive on HyperCore as opposed to relying on smart contracts.</p>
+<p>The multi-sig workflow is described below:</p>
+<p>To convert a user to a multi-sig user, the user sends a ConvertToMultiSigUser action with the authorized users and the minimum number of authorized users required to sign an action. Authorized users must be existing users on Hyperliquid. Once a user has been converted into a multi-sig user, all its actions must be sent via multi-sig.</p>
+<p>To send an action, each authorized user must sign a payload to produce a signature. A MultiSig action wraps around any normal action and includes a list of signatures from authorized users.</p>
+<p>The MultiSig payload also contains the target multi-sig user and the authorized user who will ultimately send the MultiSig action to the blockchain. The sender of the final action is also known as the leader (transaction lead address) of the multi-sig action.</p>
+<p>When a multi-sig action is sent, only the nonce set of the authorized user who sent the transaction is validated and updated.</p>
+<p>Similar to normal actions, the leader can also be an API wallet of an authorized user. In this case, the nonce of the API wallet is checked and updated.</p>
+<p>A multi-sig user&rsquo;s set of authorized users and/or the threshold may be updated by sending a MultiSig action wrapping a ConvertToMultiSigUser action describing the new state.</p>
+<p>A multi-sig user can be converted back to a normal user by sending a ConvertToMultiSigUser via multi-sig. In this case, the set of authorized users can be set to empty and conversion to a normal user will be performed.</p>
+<p>Miscellaneous notes:</p>
+<ul>
+<li>The leader (transaction lead address) must be an authorized user, not the multi-sig account</li>
+<li>Each signature must use the same information, e.g., same nonce, transaction lead address, etc.</li>
+<li>The leader must collect all signatures before submitting the action</li>
+<li>A user can be a multi-sig user and an authorized user for another multi-sig user at the same time. A user may be an authorized user for multiple multi-sig users. The maximum allowed number of authorized users for a given multi-sig user is 10.</li>
+</ul>
+<p>Important for HyperEVM users: Converting a user to a multi-sig still leaves the HyperEVM user controllable by the original wallet. CoreWriter does not work for multi-sig users. In general, multi-sig users should not interact with the HyperEVM before or after conversion.</p>
+<hr>
+<h4 id="builder-codes">Builder Codes</h4>
+<p>Builder codes allow builders to receive a fee on fills that they send on behalf of a user. They are set per-order for maximal flexibility. The user must approve a maximum builder fee for each builder, and can revoke permissions at any time. Builder codes are processed entirely onchain as part of the fee logic.</p>
+<p>In order to use builder codes, the end user would first approve a max fee for the builder address via the ApproveBuilderFee action. This action must be signed by the user&rsquo;s main wallet, not an agent/API wallet. The builder must have at least 100 USDC in perps account value and must use standard as the account abstraction mode.</p>
+<p>Builder codes currently only apply to fees that are collected in the quote or collateral asset. In other words, builder codes do not apply to the buying side of spot trades but apply to both sides of perp trades. Builder fees charged can be at most 0.1% on perps and 1% on spot.</p>
+<p>Each user can have a maximum of 10 active builder code approvals at a time.</p>
+<hr>
+<h4 id="crypto-perps">Crypto Perps</h4>
+<p>Hyperliquid perpetuals are derivatives products without expiration date. Instead, they rely on funding payments to ensure convergence to the underlying spot price over time.</p>
+<p>Hyperliquid has one main style of margining for perpetual contracts: USDC margining, USDT denominated linear contracts. That is, the oracle price is denominated in USDT, but the collateral is USDC. This allows for the best combination of liquidity and accessibility. Note that no conversions with the USDC/USDT exchange rate are applied, so these contracts are technically quanto contracts where USDT pnl is denominated in USDC.</p>
+<p>USDT has the deepest pricing liquidity: The vast majority of global crypto spot trading (especially on dominant centralized exchanges like Binance) happens against USDT. Because the spot markets for BTC/USDT or SOL/USDT are incredibly deep, price oracles that track USDT pairs are the most accurate and the hardest for malicious actors to manipulate. If Hyperliquid tracked BTC/USDC instead, the oracle would be less robust and more vulnerable to sudden price wicks on less liquid order books.</p>
+<p>USDC is the preferred on-chain collateral: While USDT dominates centralized exchanges, USDC is historically the preferred stablecoin for decentralized finance (DeFi) and bridging. Users can easily bridge USDC from networks like Arbitrum directly to Hyperliquid&rsquo;s Layer 1 without cross-chain friction.</p>
+<p>There is a logical exception for Hyperliquid&rsquo;s native assets like PURR and HYPE. Because their primary spot liquidity actually lives on Hyperliquid itself and trades against USDC, those specific perpetual contracts are entirely USDC-denominated.</p>
+<p>In traditional finance, a quanto (quantity-adjusting) contract is a derivative where the underlying asset is priced in one currency, but the trade is settled in a different currency at a fixed exchange rate.</p>
+<p>On Hyperliquid, you are trading an asset priced in USDT, but your profits are paid out in USDC.</p>
+<p>Normally, if you made a 100 USDT profit, the exchange would have to calculate the real-time conversion value of USDT against USDC (which might temporarily be $0.998 or $1.002) before crediting your account. Hyperliquid skips this step. They apply a strictly fixed 1:1 exchange rate.</p>
+<p>If your trade makes 100 USDT in PnL, you are credited exactly 100 USDC. This simplifies the matching engine&rsquo;s math, avoids reliance on a secondary stablecoin exchange rate, and allows the chain to process transactions at blistering sub-second speeds.</p>
+<hr>
+<h4 id="breakers">Breakers</h4>
+<p>Hyperliquid does not have traditional exchange-style circuit breakers like the NYSE&rsquo;s Level 1/2/3 halts. Instead, it uses a layered set of protocol-level constraints that function as rate limiters and safety bounds. Mark price moves are clamped to 1% per oracle update cycle (roughly every 3 seconds with a minimum 2.5-second cooldown).</p>
+<p>All prices are clamped to 10x the start-of-day value as an absolute ceiling. Mark prices cannot be updated if doing so would push open interest above 10x the OI cap. And if the deployer stops publishing oracle updates, stale mark prices automatically revert to the local mark price (median of best bid, best ask, last trade) after 10 seconds.</p>
+<p>If an asset moves more than 50% relative to its start-of-day price, validators conduct a review to determine whether the deployer should be slashed. The deployer&rsquo;s 500,000 HYPE security bond is at stake — irregular inputs or prolonged downtime can result in up to 100% slashing, with slashed HYPE burned permanently.</p>
+<h3 id="hyperevm">HyperEVM</h3>
+<p>Layer-1 blockchain. It launched on mainnet on February 18, 2025. It is not a rollup, not a sidechain, and not a separate chain — it is part of the same L1, secured by the same HyperBFT consensus as the rest of Hyperliquid. HyperEVM is based on the Cancun EVM specification (without blob).</p>
+<p>What makes HyperEVM different from every other EVM chain is what it connects to. On Ethereum, Arbitrum, or Base, smart contracts interact with AMMs and external oracles. On HyperEVM, smart contracts can natively read from and write to HyperCore. This means a contract can check live perp prices, place limit orders on the order book, and manage vault positions — all on-chain, with no bridges or off-chain components.</p>
+<p>All existing Ethereum tooling works. The gas token is HYPE, and both base fees and priority fees are burned. It uses a dual-block architecture — small blocks every 2 seconds for fast lightweight transactions, and big blocks every 60 seconds for contract deployments and complex operations.</p>
+<p>The HyperEVM &ldquo;mempool&rdquo; is still onchain state with respect to the umbrella L1 execution, but is split into two independent mempools that source transactions for the two block types. The two block types are interleaved with a unique increasing sequence of EVM block numbers. The onchain mempool implementation accepts only the next 8 nonces for each address. Transactions older than 1 day old in the mempool are pruned.</p>
+<p>The initial configuration is set conservatively, and throughput is expected to increase over successive technical upgrades. Fast block duration is set to 1 seconds with a 3M gas limit. Slow block duration is set to 1 minute with a 30M gas limit.</p>
+<h4 id="connection-between-them">Connection between them</h4>
+<p>HyperEVM and HyperCore are two execution environments on the same chain, and contracts move data between them in two directions:</p>
+<ul>
+<li>Read — HyperCore exposes read precompiles starting at 0x0000000000000000000000000000000000000800. A contract calls them to query perp positions, spot balances, oracle prices, staking delegations, and the L1 block number. The returned values match HyperCore state at the time the EVM block is built.</li>
+<li>Write — the CoreWriter system contract at 0x3333333333333333333333333333333333333333 sends actions to HyperCore.</li>
+</ul>
+<p>This split mirrors the API: read precompiles are the on-chain equivalent of <code>/info</code> queries, and CoreWriter is the on-chain equivalent of signed <code>/exchange</code> actions. The difference is that CoreWriter actions are authored by the calling contract’s own address—the contract is the HyperCore actor, so no off-chain signature is involved.</p>
+<p>When you call <code>sendRawAction</code>, the contract burns roughly 25,000 gas and emits a log that HyperCore picks up and processes as an action. A basic call costs around 47,000 gas in total. The action runs as the caller’s HyperCore user—the contract address that invoked <code>sendRawAction</code>.</p>
+<p>CoreWriter actions are fire-and-forget. <code>sendRawAction</code> emits its log and the EVM transaction succeeds whether or not HyperCore accepts the action. If the action is malformed or the account is not set up, HyperCore drops it silently—no EVM revert, no error event, and the order simply never appears in openOrders. This is the single most common source of confusion, so check the following before concluding that CoreWriter is broken.</p>
+<p><strong>The account must exist on HyperCore first</strong></p>
+<p>A CoreWriter action runs as the contract’s HyperCore user, and that user must already exist on HyperCore before the EVM block is built. An address becomes a HyperCore user once it receives a Core asset such as USDC.
+Initializing the account with a HyperEVM-to-HyperCore transfer in the same block as the action does not work—the action is still rejected. Fund the contract’s HyperCore account in an earlier block, then send actions.
+Send a small amount of USDC to the contract’s address on HyperCore in a separate, earlier transaction. You can confirm the account exists on-chain by calling the core-user-exists precompile at 0x0000000000000000000000000000000000000810</p>
+<p><strong>Perp orders need USDC on the perp side</strong></p>
+<p>Bridging USDC from HyperEVM lands it in the contract’s spot balance. A perp limit order draws on the perp balance, so a freshly funded contract can hold plenty of USDC and still have its orders dropped. Move funds to the perp side first with a USD class transfer (action 7, toPerp: true).</p>
+<p><strong>Core =&gt; EVM</strong></p>
+<ol>
+<li>You send a spotSend action with the system address (0x20&hellip;0 for USDC) as the destination</li>
+<li>Hyperliquid detects this as a bridge request and triggers a system transaction</li>
+<li>The system transaction calls transfer(sender_address, amount) on the linked ERC20 contract</li>
+<li>USDC appears in your HyperEVM wallet (the sender’s address)</li>
+</ol>
+<p>A transfer from HyperCore to HyperEVM costs 200k gas at the base gas price of the next HyperEVM block.</p>
+<p><strong>EVM =&gt; Core</strong></p>
+<ol>
+<li>Call <code>bridgeToCore</code> in the library or handle cases listed there separately. <code>deposit</code> in USDC&rsquo;s token (CoreDepositWallet) calls the same CoreWriter&rsquo;s <code>SEND_ASSET</code> action (<code>sendAsset</code> in the lib), but let&rsquo;s you configure to which dexes (HIP-3) you can and cannot transfer.</li>
+</ol>
+<p>A transfer from HyperEVM to HyperCore costs similar gas to the equivalent transfer of the ERC20 token or HYPE to any other address on the HyperEVM that has an existing balance.</p>
+<p>CoreWriterLib from <code>hyperliquid-dev/hyper-evm-lib</code></p>
+<div class="code-block-wrapper collapsible-code">
+    <div class="code-block-content">
+        
+        <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#75715e">// SPDX-License-Identifier: MIT
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">pragma solidity</span> <span style="color:#f92672">^</span><span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">8</span>.<span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> {IERC20} <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#34;@openzeppelin/contracts/token/ERC20/IERC20.sol&#34;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> {SafeERC20} <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#34;@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> {PrecompileLib} <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#34;./PrecompileLib.sol&#34;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> {HLConstants} <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#34;./common/HLConstants.sol&#34;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> {HLConversions} <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#34;./common/HLConversions.sol&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> {ICoreWriter} <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#34;./interfaces/ICoreWriter.sol&#34;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> {ICoreDepositWallet} <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#34;./interfaces/ICoreDepositWallet.sol&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @title CoreWriterLib v1.1
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @author Obsidian (https://x.com/ObsidianAudits)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @notice A library for interacting with HyperEVM&#39;s CoreWriter
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @dev Additional functionality for:
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * - Bridging assets between EVM and HyperCore
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * - Converting decimal representations between EVM and HyperCore amounts
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * - Security checks before sending actions to CoreWriter
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">library</span> CoreWriterLib {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">using</span> SafeERC20 <span style="color:#66d9ef">for</span> IERC20;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    ICoreWriter <span style="color:#66d9ef">constant</span> coreWriter <span style="color:#f92672">=</span> ICoreWriter(<span style="color:#ae81ff">0x3333333333333333333333333333333333333333</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    error CoreWriterLib__StillLockedUntilTimestamp(<span style="color:#66d9ef">uint64</span> lockedUntilTimestamp);
+</span></span><span style="display:flex;"><span>    error CoreWriterLib__CannotSelfTransfer();
+</span></span><span style="display:flex;"><span>    error CoreWriterLib__HypeTransferFailed();
+</span></span><span style="display:flex;"><span>    error CoreWriterLib__CoreAmountTooLarge(<span style="color:#66d9ef">uint256</span> amount);
+</span></span><span style="display:flex;"><span>    error CoreWriterLib__EvmAmountTooSmall(<span style="color:#66d9ef">uint256</span> amount);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*//////////////////////////////////////////////////////////////
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">                       EVM &lt;---&gt; Core Bridging
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    //////////////////////////////////////////////////////////////*/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">bridgeToCore</span>(<span style="color:#66d9ef">address</span> tokenAddress, <span style="color:#66d9ef">uint256</span> evmAmount) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> tokenIndex <span style="color:#f92672">=</span> PrecompileLib.getTokenIndex(tokenAddress);
+</span></span><span style="display:flex;"><span>        bridgeToCore(tokenIndex, evmAmount);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    * @dev All tokens (including USDC) will be bridged to the spot dex
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">bridgeToCore</span>(<span style="color:#66d9ef">uint64</span> token, <span style="color:#66d9ef">uint256</span> evmAmount) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        ICoreDepositWallet coreDepositWallet <span style="color:#f92672">=</span> ICoreDepositWallet(HLConstants.coreDepositWallet());
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Check if amount would be 0 after conversion to prevent token loss
+</span></span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> coreAmount <span style="color:#f92672">=</span> HLConversions.evmToWei(token, evmAmount);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (coreAmount <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) revert CoreWriterLib__EvmAmountTooSmall(evmAmount);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">address</span> systemAddress <span style="color:#f92672">=</span> getSystemAddress(token);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (HLConstants.isUsdc(token)) {
+</span></span><span style="display:flex;"><span>            IERC20(HLConstants.usdc()).approve(<span style="color:#66d9ef">address</span>(coreDepositWallet), evmAmount);
+</span></span><span style="display:flex;"><span>            coreDepositWallet.deposit(evmAmount, <span style="color:#66d9ef">uint32</span>(type(<span style="color:#a6e22e">uint32</span>).max));
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> (isHype(token)) {
+</span></span><span style="display:flex;"><span>            (<span style="color:#66d9ef">bool</span> success,) <span style="color:#f92672">=</span> systemAddress.call{value<span style="color:#f92672">:</span> evmAmount}(<span style="color:#e6db74">&#34;&#34;</span>);
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert CoreWriterLib__HypeTransferFailed();
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            PrecompileLib.TokenInfo <span style="color:#66d9ef">memory</span> info <span style="color:#f92672">=</span> PrecompileLib.tokenInfo(<span style="color:#66d9ef">uint32</span>(token));
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">address</span> tokenAddress <span style="color:#f92672">=</span> info.evmContract;
+</span></span><span style="display:flex;"><span>            IERC20(tokenAddress).safeTransfer(systemAddress, evmAmount);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @notice Bridges USDC from EVM to Core to a specific recipient
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param recipient The address that will receive the USDC on Core
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param evmAmount The amount of USDC to bridge (in EVM decimals)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param destinationDex The dex to send the USDC to on Core (type(uint32).max for spot, 0 for default perp dex)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">bridgeUsdcToCoreFor</span>(<span style="color:#66d9ef">address</span> recipient, <span style="color:#66d9ef">uint256</span> evmAmount, <span style="color:#66d9ef">uint32</span> destinationDex) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        ICoreDepositWallet coreDepositWallet <span style="color:#f92672">=</span> ICoreDepositWallet(HLConstants.coreDepositWallet());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Check if amount would be 0 after conversion to prevent token loss
+</span></span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> coreAmount <span style="color:#f92672">=</span> HLConversions.evmToWei(HLConstants.USDC_TOKEN_INDEX, evmAmount);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (coreAmount <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) revert CoreWriterLib__EvmAmountTooSmall(evmAmount);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        IERC20(HLConstants.usdc()).approve(<span style="color:#66d9ef">address</span>(coreDepositWallet), evmAmount);
+</span></span><span style="display:flex;"><span>        coreDepositWallet.depositFor(recipient, evmAmount, destinationDex);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">bridgeToEvm</span>(<span style="color:#66d9ef">address</span> tokenAddress, <span style="color:#66d9ef">uint256</span> evmAmount) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> tokenIndex <span style="color:#f92672">=</span> PrecompileLib.getTokenIndex(tokenAddress);
+</span></span><span style="display:flex;"><span>        bridgeToEvm(tokenIndex, evmAmount, <span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// NOTE: For bridging non-HYPE tokens, the contract must hold some HYPE on core (enough to cover the transfer gas), otherwise sendAsset will fail
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">bridgeToEvm</span>(<span style="color:#66d9ef">uint64</span> token, <span style="color:#66d9ef">uint256</span> amount, <span style="color:#66d9ef">bool</span> isEvmAmount) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> coreAmount;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (isEvmAmount) {
+</span></span><span style="display:flex;"><span>            coreAmount <span style="color:#f92672">=</span> HLConversions.evmToWei(token, amount);
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (coreAmount <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) revert CoreWriterLib__EvmAmountTooSmall(amount);
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (amount <span style="color:#f92672">&gt;</span> type(<span style="color:#a6e22e">uint64</span>).max) revert CoreWriterLib__CoreAmountTooLarge(amount);
+</span></span><span style="display:flex;"><span>            coreAmount <span style="color:#f92672">=</span> <span style="color:#66d9ef">uint64</span>(amount);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        sendAsset(
+</span></span><span style="display:flex;"><span>            getSystemAddress(token),
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">address</span>(<span style="color:#ae81ff">0</span>),
+</span></span><span style="display:flex;"><span>            HLConstants.SPOT_DEX,
+</span></span><span style="display:flex;"><span>            HLConstants.SPOT_DEX,
+</span></span><span style="display:flex;"><span>            token,
+</span></span><span style="display:flex;"><span>            coreAmount
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">spotSend</span>(<span style="color:#66d9ef">address</span> to, <span style="color:#66d9ef">uint64</span> token, <span style="color:#66d9ef">uint64</span> amountWei) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Self-transfers will always fail, so reverting here
+</span></span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (to <span style="color:#f92672">==</span> <span style="color:#66d9ef">address</span>(this)) revert CoreWriterLib__CannotSelfTransfer();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.SPOT_SEND_ACTION, abi.encode(to, token, amountWei))
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*//////////////////////////////////////////////////////////////
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">                          Bridging Utils
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    //////////////////////////////////////////////////////////////*/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getSystemAddress</span>(<span style="color:#66d9ef">uint64</span> index) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">address</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (index <span style="color:#f92672">==</span> HLConstants.hypeTokenIndex()) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> HLConstants.HYPE_SYSTEM_ADDRESS;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">address</span>(HLConstants.BASE_SYSTEM_ADDRESS <span style="color:#f92672">+</span> index);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">isHype</span>(<span style="color:#66d9ef">uint64</span> index) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">bool</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> index <span style="color:#f92672">==</span> HLConstants.hypeTokenIndex();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*//////////////////////////////////////////////////////////////
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">                              Staking
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    //////////////////////////////////////////////////////////////*/</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">delegateToken</span>(<span style="color:#66d9ef">address</span> validator, <span style="color:#66d9ef">uint64</span> amountWei, <span style="color:#66d9ef">bool</span> undelegate) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.TOKEN_DELEGATE_ACTION, abi.encode(validator, amountWei, undelegate))
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">depositStake</span>(<span style="color:#66d9ef">uint64</span> amountWei) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.STAKING_DEPOSIT_ACTION, abi.encode(amountWei)));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">withdrawStake</span>(<span style="color:#66d9ef">uint64</span> amountWei) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.STAKING_WITHDRAW_ACTION, abi.encode(amountWei)));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*//////////////////////////////////////////////////////////////
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">                              Trading
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    //////////////////////////////////////////////////////////////*/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">toMilliseconds</span>(<span style="color:#66d9ef">uint64</span> timestamp) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">pure</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> timestamp <span style="color:#f92672">*</span> <span style="color:#ae81ff">1000</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">_canWithdrawFromVault</span>(<span style="color:#66d9ef">address</span> vault) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">bool</span>, <span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        PrecompileLib.UserVaultEquity <span style="color:#66d9ef">memory</span> vaultEquity <span style="color:#f92672">=</span> PrecompileLib.userVaultEquity(<span style="color:#66d9ef">address</span>(this), vault);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>            (
+</span></span><span style="display:flex;"><span>                toMilliseconds(<span style="color:#66d9ef">uint64</span>(block.timestamp)) <span style="color:#f92672">&gt;</span> vaultEquity.lockedUntilTimestamp,
+</span></span><span style="display:flex;"><span>                vaultEquity.lockedUntilTimestamp
+</span></span><span style="display:flex;"><span>            );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">vaultTransfer</span>(<span style="color:#66d9ef">address</span> vault, <span style="color:#66d9ef">bool</span> isDeposit, <span style="color:#66d9ef">uint64</span> usdAmount) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>isDeposit) {
+</span></span><span style="display:flex;"><span>            (<span style="color:#66d9ef">bool</span> canWithdraw, <span style="color:#66d9ef">uint64</span> lockedUntilTimestamp) <span style="color:#f92672">=</span> _canWithdrawFromVault(vault);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>canWithdraw) revert CoreWriterLib__StillLockedUntilTimestamp(lockedUntilTimestamp);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.VAULT_TRANSFER_ACTION, abi.encode(vault, isDeposit, usdAmount))
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">transferUsdClass</span>(<span style="color:#66d9ef">uint64</span> ntl, <span style="color:#66d9ef">bool</span> toPerp) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.USD_CLASS_TRANSFER_ACTION, abi.encode(ntl, toPerp))
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">placeLimitOrder</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint32</span> asset,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">bool</span> isBuy,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> limitPx,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> sz,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">bool</span> reduceOnly,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint8</span> encodedTif,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint128</span> cloid
+</span></span><span style="display:flex;"><span>    ) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>),
+</span></span><span style="display:flex;"><span>                HLConstants.LIMIT_ORDER_ACTION,
+</span></span><span style="display:flex;"><span>                abi.encode(asset, isBuy, limitPx, sz, reduceOnly, encodedTif, cloid)
+</span></span><span style="display:flex;"><span>            )
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">addApiWallet</span>(<span style="color:#66d9ef">address</span> wallet, <span style="color:#66d9ef">string</span> <span style="color:#66d9ef">memory</span> name) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.ADD_API_WALLET_ACTION, abi.encode(wallet, name))
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">cancelOrderByOrderId</span>(<span style="color:#66d9ef">uint32</span> asset, <span style="color:#66d9ef">uint64</span> orderId) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.CANCEL_ORDER_BY_OID_ACTION, abi.encode(asset, orderId))
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">cancelOrderByCloid</span>(<span style="color:#66d9ef">uint32</span> asset, <span style="color:#66d9ef">uint128</span> cloid) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.CANCEL_ORDER_BY_CLOID_ACTION, abi.encode(asset, cloid))
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">finalizeEvmContract</span>(<span style="color:#66d9ef">uint64</span> token, <span style="color:#66d9ef">uint8</span> encodedVariant, <span style="color:#66d9ef">uint64</span> createNonce) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.FINALIZE_EVM_CONTRACT_ACTION, abi.encode(token, encodedVariant, createNonce)
+</span></span><span style="display:flex;"><span>            )
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">approveBuilderFee</span>(<span style="color:#66d9ef">uint64</span> maxFeeRate, <span style="color:#66d9ef">address</span> builder) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.APPROVE_BUILDER_FEE_ACTION, abi.encode(maxFeeRate, builder))
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">sendAsset</span>(<span style="color:#66d9ef">address</span> destination, <span style="color:#66d9ef">address</span> subAccount, <span style="color:#66d9ef">uint32</span> source_dex, <span style="color:#66d9ef">uint32</span> destination_dex, <span style="color:#66d9ef">uint64</span> token, <span style="color:#66d9ef">uint64</span> amountWei) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.SEND_ASSET_ACTION, abi.encode(destination, subAccount, source_dex, destination_dex, token, amountWei))
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*//////////////////////////////////////////////////////////////
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">                            Borrow/Lend
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    //////////////////////////////////////////////////////////////*/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/// @dev encodedOperation: 0 = Supply, 1 = Withdraw
+</span></span></span><span style="display:flex;"><span>    <span style="color:#75715e">/// @dev If amountWei is 0, the operation is applied maximally (e.g. withdraw full balance)
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">borrowLend</span>(<span style="color:#66d9ef">uint8</span> encodedOperation, <span style="color:#66d9ef">uint64</span> token, <span style="color:#66d9ef">uint64</span> amountWei) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.BORROW_LEND_ACTION, abi.encode(encodedOperation, token, amountWei))
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*//////////////////////////////////////////////////////////////
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">                            Abstraction
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    //////////////////////////////////////////////////////////////*/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/// @dev abstraction: 1 = disabled, 2 = unifiedAccount, 3 = portfolioMargin
+</span></span></span><span style="display:flex;"><span>    <span style="color:#75715e">/// @dev `user` can either be the master user or a sub-account
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">setAbstraction</span>(<span style="color:#66d9ef">address</span> user, <span style="color:#66d9ef">uint8</span> abstraction) <span style="color:#66d9ef">internal</span> {
+</span></span><span style="display:flex;"><span>        coreWriter.sendRawAction(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(<span style="color:#66d9ef">uint8</span>(<span style="color:#ae81ff">1</span>), HLConstants.SET_ABSTRACTION_ACTION, abi.encode(user, abstraction))
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></div>
+    </div>
+    <button class="show-more-btn" onclick="toggleCodeBlock(this)" type="button">Show More</button>
+</div><p>PrecompilesLib from <code>hyperliquid-dev/hyper-evm-lib</code></p>
+<div class="code-block-wrapper collapsible-code">
+    <div class="code-block-content">
+        
+        <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#75715e">// SPDX-License-Identifier: MIT
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">pragma solidity</span> <span style="color:#f92672">^</span><span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">8</span>.<span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> {ITokenRegistry} <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#34;./interfaces/ITokenRegistry.sol&#34;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> {HLConstants} <span style="color:#66d9ef">from</span> <span style="color:#e6db74">&#34;./common/HLConstants.sol&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @title PrecompileLib v1.0
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @author Obsidian (https://x.com/ObsidianAudits)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @notice A library with helper functions for interacting with HyperEVM&#39;s precompiles
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">library</span> PrecompileLib {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Onchain record of token indices for each linked evm contract
+</span></span></span><span style="display:flex;"><span>    ITokenRegistry <span style="color:#66d9ef">constant</span> REGISTRY <span style="color:#f92672">=</span> ITokenRegistry(<span style="color:#ae81ff">0x0b51d1A9098cf8a72C325003F44C194D41d7A85B</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*//////////////////////////////////////////////////////////////
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">                  Custom Utility Functions
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">        (Overloads accepting token address instead of index)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    //////////////////////////////////////////////////////////////*/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @notice Gets TokenInfo for a given token address by looking up its index and fetching from the precompile.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @dev Overload of tokenInfo(uint64 token)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">tokenInfo</span>(<span style="color:#66d9ef">address</span> tokenAddress) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (TokenInfo <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> index <span style="color:#f92672">=</span> getTokenIndex(tokenAddress);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> tokenInfo(index);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @notice Gets SpotInfo for the token/USDC market using the token address.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @dev Overload of spotInfo(uint64 tokenIndex)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * Finds the spot market where USDC (index 0) is the quote.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">spotInfo</span>(<span style="color:#66d9ef">address</span> tokenAddress) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (SpotInfo <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> tokenIndex <span style="color:#f92672">=</span> getTokenIndex(tokenAddress);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> spotIndex <span style="color:#f92672">=</span> getSpotIndex(tokenIndex);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> spotInfo(spotIndex);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @notice Gets the spot price for the token/USDC market using the token address.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @dev Overload of spotPx(uint64 spotIndex)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">spotPx</span>(<span style="color:#66d9ef">address</span> tokenAddress) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> tokenIndex <span style="color:#f92672">=</span> getTokenIndex(tokenAddress);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> spotIndex <span style="color:#f92672">=</span> getSpotIndex(tokenIndex);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> spotPx(spotIndex);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @notice Gets a user&#39;s spot balance for a given token address.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @dev Overload of spotBalance(address user, uint64 token)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">spotBalance</span>(<span style="color:#66d9ef">address</span> user, <span style="color:#66d9ef">address</span> tokenAddress) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (SpotBalance <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> tokenIndex <span style="color:#f92672">=</span> getTokenIndex(tokenAddress);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> spotBalance(user, tokenIndex);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @notice Gets the index of a token from its address. Reverts if token is not linked to HyperCore.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getTokenIndex</span>(<span style="color:#66d9ef">address</span> tokenAddress) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (tokenAddress <span style="color:#f92672">==</span> HLConstants.usdc()) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> HLConstants.USDC_TOKEN_INDEX;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> REGISTRY.getTokenIndex(tokenAddress);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @notice Gets the spot market index for the token/USDC pair for a token using its address.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @dev Overload of getSpotIndex(uint64 tokenIndex)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getSpotIndex</span>(<span style="color:#66d9ef">address</span> tokenAddress) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> tokenIndex <span style="color:#f92672">=</span> getTokenIndex(tokenAddress);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> getSpotIndex(tokenIndex);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @notice Gets the spot market index for a token.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @dev If only one spot market exists, returns it. Otherwise, finds the spot market with USDC as the quote token.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getSpotIndex</span>(<span style="color:#66d9ef">uint64</span> tokenIndex) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span>[] <span style="color:#66d9ef">memory</span> spots <span style="color:#f92672">=</span> tokenInfo(tokenIndex).spots;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (spots.length <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>) <span style="color:#66d9ef">return</span> spots[<span style="color:#ae81ff">0</span>];
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">uint256</span> idx <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; idx <span style="color:#f92672">&lt;</span> spots.length; idx<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>            SpotInfo <span style="color:#66d9ef">memory</span> spot <span style="color:#f92672">=</span> spotInfo(spots[idx]);
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (spot.tokens[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// index 0 = USDC
+</span></span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> spots[idx];
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        revert PrecompileLib__SpotIndexNotFound();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*//////////////////////////////////////////////////////////////
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">                  Using Alternate Quote Token (non USDC)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    //////////////////////////////////////////////////////////////*/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @notice Gets the spot market index for a token/quote pair.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * Iterates all spot markets for the token and matches the quote token index.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @dev Overload of getSpotIndex(uint64 tokenIndex)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getSpotIndex</span>(<span style="color:#66d9ef">uint64</span> tokenIndex, <span style="color:#66d9ef">uint64</span> quoteTokenIndex) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span>[] <span style="color:#66d9ef">memory</span> spots <span style="color:#f92672">=</span> tokenInfo(tokenIndex).spots;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">uint256</span> idx <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; idx <span style="color:#f92672">&lt;</span> spots.length; idx<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>            SpotInfo <span style="color:#66d9ef">memory</span> spot <span style="color:#f92672">=</span> spotInfo(spots[idx]);
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (spot.tokens[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">==</span> quoteTokenIndex) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> spots[idx];
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        revert PrecompileLib__SpotIndexNotFound();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @notice Gets SpotInfo for a token/quote pair using token addresses.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * Looks up both token and quote indices, then finds the spot market.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @dev Overload of spotInfo(uint64 spotIndex)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">spotInfo</span>(<span style="color:#66d9ef">address</span> token, <span style="color:#66d9ef">address</span> quoteToken) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (SpotInfo <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> tokenIndex <span style="color:#f92672">=</span> getTokenIndex(token);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> quoteTokenIndex <span style="color:#f92672">=</span> getTokenIndex(quoteToken);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> spotIndex <span style="color:#f92672">=</span> getSpotIndex(tokenIndex, quoteTokenIndex);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> spotInfo(spotIndex);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @notice Gets the spot price for a token/quote pair using token addresses.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * Looks up both token and quote indices, then finds the spot market.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @dev Overload of spotPx(uint64 spotIndex)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">spotPx</span>(<span style="color:#66d9ef">address</span> token, <span style="color:#66d9ef">address</span> quoteToken) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> tokenIndex <span style="color:#f92672">=</span> getTokenIndex(token);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> quoteTokenIndex <span style="color:#f92672">=</span> getTokenIndex(quoteToken);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> spotIndex <span style="color:#f92672">=</span> getSpotIndex(tokenIndex, quoteTokenIndex);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> spotPx(spotIndex);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*//////////////////////////////////////////////////////////////
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">                        Price decimals normalization
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    //////////////////////////////////////////////////////////////*/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// returns spot price as a fixed-point integer with 8 decimals
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">normalizedSpotPx</span>(<span style="color:#66d9ef">uint64</span> spotIndex) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint256</span>) {
+</span></span><span style="display:flex;"><span>        SpotInfo <span style="color:#66d9ef">memory</span> info <span style="color:#f92672">=</span> spotInfo(spotIndex);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint8</span> baseSzDecimals <span style="color:#f92672">=</span> tokenInfo(info.tokens[<span style="color:#ae81ff">0</span>]).szDecimals;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> spotPx(spotIndex) <span style="color:#f92672">*</span> <span style="color:#ae81ff">10</span> <span style="color:#f92672">**</span> baseSzDecimals;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// returns mark price as a fixed-point integer with 6 decimals
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">normalizedMarkPx</span>(<span style="color:#66d9ef">uint32</span> perpIndex) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint256</span>) {
+</span></span><span style="display:flex;"><span>        PerpAssetInfo <span style="color:#66d9ef">memory</span> info <span style="color:#f92672">=</span> perpAssetInfo(perpIndex);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> markPx(perpIndex) <span style="color:#f92672">*</span> <span style="color:#ae81ff">10</span> <span style="color:#f92672">**</span> info.szDecimals;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// returns perp oracle price as a fixed-point integer with 6 decimals
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">normalizedOraclePx</span>(<span style="color:#66d9ef">uint32</span> perpIndex) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint256</span>) {
+</span></span><span style="display:flex;"><span>        PerpAssetInfo <span style="color:#66d9ef">memory</span> info <span style="color:#f92672">=</span> perpAssetInfo(perpIndex);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> oraclePx(perpIndex) <span style="color:#f92672">*</span> <span style="color:#ae81ff">10</span> <span style="color:#f92672">**</span> info.szDecimals;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*//////////////////////////////////////////////////////////////
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">                              Precompile Calls
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    //////////////////////////////////////////////////////////////*/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">position</span>(<span style="color:#66d9ef">address</span> user, <span style="color:#66d9ef">uint32</span> perp) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (Position <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.POSITION2_PRECOMPILE_ADDRESS.staticcall(abi.encode(user, perp));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__Position2PrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (Position));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">spotBalance</span>(<span style="color:#66d9ef">address</span> user, <span style="color:#66d9ef">uint64</span> token) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (SpotBalance <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>            HLConstants.SPOT_BALANCE_PRECOMPILE_ADDRESS.staticcall(abi.encode(user, token));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__SpotBalancePrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (SpotBalance));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">userVaultEquity</span>(<span style="color:#66d9ef">address</span> user, <span style="color:#66d9ef">address</span> vault) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (UserVaultEquity <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>            HLConstants.VAULT_EQUITY_PRECOMPILE_ADDRESS.staticcall(abi.encode(user, vault));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__VaultEquityPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (UserVaultEquity));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">withdrawable</span>(<span style="color:#66d9ef">address</span> user) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.WITHDRAWABLE_PRECOMPILE_ADDRESS.staticcall(abi.encode(user));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__WithdrawablePrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (Withdrawable)).withdrawable;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">delegations</span>(<span style="color:#66d9ef">address</span> user) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (Delegation[] <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.DELEGATIONS_PRECOMPILE_ADDRESS.staticcall(abi.encode(user));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__DelegationsPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (Delegation[]));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">delegatorSummary</span>(<span style="color:#66d9ef">address</span> user) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (DelegatorSummary <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>            HLConstants.DELEGATOR_SUMMARY_PRECOMPILE_ADDRESS.staticcall(abi.encode(user));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__DelegatorSummaryPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (DelegatorSummary));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">markPx</span>(<span style="color:#66d9ef">uint32</span> perpIndex) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.MARK_PX_PRECOMPILE_ADDRESS.staticcall(abi.encode(perpIndex));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__MarkPxPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (<span style="color:#66d9ef">uint64</span>));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">oraclePx</span>(<span style="color:#66d9ef">uint32</span> perpIndex) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.ORACLE_PX_PRECOMPILE_ADDRESS.staticcall(abi.encode(perpIndex));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__OraclePxPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (<span style="color:#66d9ef">uint64</span>));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">spotPx</span>(<span style="color:#66d9ef">uint64</span> spotIndex) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.SPOT_PX_PRECOMPILE_ADDRESS.staticcall(abi.encode(spotIndex));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__SpotPxPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (<span style="color:#66d9ef">uint64</span>));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">perpAssetInfo</span>(<span style="color:#66d9ef">uint32</span> perp) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (PerpAssetInfo <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>            HLConstants.PERP_ASSET_INFO_PRECOMPILE_ADDRESS.staticcall(abi.encode(perp));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__PerpAssetInfoPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (PerpAssetInfo));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">spotInfo</span>(<span style="color:#66d9ef">uint64</span> spotIndex) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (SpotInfo <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.SPOT_INFO_PRECOMPILE_ADDRESS.staticcall(abi.encode(spotIndex));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__SpotInfoPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (SpotInfo));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">tokenInfo</span>(<span style="color:#66d9ef">uint64</span> token) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (TokenInfo <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.TOKEN_INFO_PRECOMPILE_ADDRESS.staticcall(abi.encode(token));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__TokenInfoPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (TokenInfo));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">tokenSupply</span>(<span style="color:#66d9ef">uint64</span> token) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (TokenSupply <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.TOKEN_SUPPLY_PRECOMPILE_ADDRESS.staticcall(abi.encode(token));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__TokenSupplyPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (TokenSupply));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">l1BlockNumber</span>() <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint64</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.L1_BLOCK_NUMBER_PRECOMPILE_ADDRESS.staticcall(abi.encode());
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__L1BlockNumberPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (<span style="color:#66d9ef">uint64</span>));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">bbo</span>(<span style="color:#66d9ef">uint64</span> asset) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (Bbo <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.BBO_PRECOMPILE_ADDRESS.staticcall(abi.encode(asset));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__BboPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (Bbo));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">accountMarginSummary</span>(<span style="color:#66d9ef">uint32</span> perpDexIndex, <span style="color:#66d9ef">address</span> user)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">internal</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">view</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">returns</span> (AccountMarginSummary <span style="color:#66d9ef">memory</span>)
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.ACCOUNT_MARGIN_SUMMARY_PRECOMPILE_ADDRESS
+</span></span><span style="display:flex;"><span>            .staticcall(abi.encode(perpDexIndex, user));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__AccountMarginSummaryPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (AccountMarginSummary));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">coreUserExists</span>(<span style="color:#66d9ef">address</span> user) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">bool</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>            HLConstants.CORE_USER_EXISTS_PRECOMPILE_ADDRESS.staticcall(abi.encode(user));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__CoreUserExistsPrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (CoreUserExists)).exists;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">borrowLendUserState</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">address</span> user,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> token
+</span></span><span style="display:flex;"><span>    ) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (BorrowLendUserTokenState <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.BORROW_LEND_USER_STATE_PRECOMPILE_ADDRESS.staticcall(abi.encode(user, token));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__BorrowLendUserStatePrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (BorrowLendUserTokenState));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">borrowLendReserveState</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> token
+</span></span><span style="display:flex;"><span>    ) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">view</span> <span style="color:#66d9ef">returns</span> (BorrowLendReserveState <span style="color:#66d9ef">memory</span>) {
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">bool</span> success, <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> result) <span style="color:#f92672">=</span> HLConstants.BORROW_LEND_RESERVE_STATE_PRECOMPILE_ADDRESS.staticcall(abi.encode(token));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>success) revert PrecompileLib__BorrowLendReserveStatePrecompileFailed();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abi.decode(result, (BorrowLendReserveState));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*//////////////////////////////////////////////////////////////
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">                       Structs
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    //////////////////////////////////////////////////////////////*/</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Position</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int64</span> szi;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> entryNtl;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int64</span> isolatedRawUsd;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint32</span> leverage;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">bool</span> isIsolated;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">SpotBalance</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> total;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> hold;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> entryNtl;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">UserVaultEquity</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> equity;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> lockedUntilTimestamp;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Withdrawable</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> withdrawable;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Delegation</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">address</span> validator;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> amount;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> lockedUntilTimestamp;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">DelegatorSummary</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> delegated;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> undelegated;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> totalPendingWithdrawal;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> nPendingWithdrawals;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">PerpAssetInfo</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">string</span> coin;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint32</span> marginTableId;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint8</span> szDecimals;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint8</span> maxLeverage;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">bool</span> onlyIsolated;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">SpotInfo</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">string</span> name;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span>[<span style="color:#ae81ff">2</span>] tokens;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TokenInfo</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">string</span> name;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span>[] spots;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> deployerTradingFeeShare;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">address</span> deployer;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">address</span> evmContract;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint8</span> szDecimals;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint8</span> weiDecimals;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int8</span> evmExtraWeiDecimals;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">UserBalance</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">address</span> user;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> balance;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TokenSupply</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> maxSupply;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> totalSupply;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> circulatingSupply;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> futureEmissions;
+</span></span><span style="display:flex;"><span>        UserBalance[] nonCirculatingUserBalances;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Bbo</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> bid;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> ask;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">AccountMarginSummary</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int64</span> accountValue;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> marginUsed;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> ntlPos;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int64</span> rawUsd;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">CoreUserExists</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">bool</span> exists;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">BasisAndValue</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> basis;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> value;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">BorrowLendUserTokenState</span> {
+</span></span><span style="display:flex;"><span>        BasisAndValue borrow;
+</span></span><span style="display:flex;"><span>        BasisAndValue supply;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">BorrowLendReserveState</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> borrowYearlyRateBps;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> supplyYearlyRateBps;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> balance;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> utilizationBps;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> oraclePx;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> ltvBps;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> totalSupplied;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint64</span> totalBorrowed;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    error PrecompileLib__Position2PrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__SpotBalancePrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__VaultEquityPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__WithdrawablePrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__DelegationsPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__DelegatorSummaryPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__MarkPxPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__OraclePxPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__SpotPxPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__PerpAssetInfoPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__SpotInfoPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__TokenInfoPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__TokenSupplyPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__L1BlockNumberPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__BboPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__AccountMarginSummaryPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__CoreUserExistsPrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__SpotIndexNotFound();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__BorrowLendUserStatePrecompileFailed();
+</span></span><span style="display:flex;"><span>    error PrecompileLib__BorrowLendReserveStatePrecompileFailed();
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></div>
+    </div>
+    <button class="show-more-btn" onclick="toggleCodeBlock(this)" type="button">Show More</button>
+</div><p>Transferring tokens from HyperEVM to HyperCore can be done using an ERC20 transfer with the corresponding system address as the destination. The tokens are credited to the Core based on the emitted Transfer(address from, address to, uint256 value) from the linked contract.</p>
+<p>CoreWriter actions are not applied the instant the EVM transaction lands. On an L1 block that produces a HyperEVM block, the order of operations is:</p>
+<ol>
+<li>The L1 block is built.</li>
+<li>The EVM block is built.</li>
+<li>EVM-to-Core transfers are processed.</li>
+<li>CoreWriter actions are enqueued &amp; processed (the EVM actions itself are ran right away as always, but processed by the Core in the future blocks).</li>
+</ol>
+<p>This delay is designed to outlast the typical mempool inclusion window. By forcing an EVM-originated order to wait out several native L1 blocks, the network ensures that a trader cannot use the EVM layer to front-run or jump the queue of native orderbook traders.</p>
+<p>Transfers from HyperCore to HyperEVM are queued on the L1 until the next HyperEVM block. Transfers from HyperEVM to HyperCore happen in the same L1 block as the HyperEVM block, immediately after the HyperEVM block is built.</p>
+<p><strong>Verify the result</strong></p>
+<p>CoreWriter does not return a value to the caller — sendRawAction only emits a log. To confirm an action took effect, read HyperCore state:</p>
+<ul>
+<li>Query the API /info endpoint (for example, clearinghouseState for perp balances or spotClearinghouseState for spot balances) for the contract address.</li>
+<li>Read it on-chain through the HyperCore read precompiles at 0x0800 and above.</li>
+<li>Watch the L1 explorer for the enqueuing and execution entries described above.</li>
+</ul>
+<p>If an action does not appear, work through Make sure your action lands: an uninitialized HyperCore account, funds on the wrong (spot vs perp) side, a size that violates szDecimals, or checking before the action delay elapses.</p>
+
+    </section>
+</article>
+
+    </main>
+</body>
+
+</html>

@@ -2095,19 +2095,22 @@ We go bottom-up and check that the block build on the justified blocks at that t
 `voting_source.epoch + 2 >= current_epoch`: you have to declare a branch dead at some point to remove it from your memory and the algorithm. If a branch couldn't justify a block for 2 epochs -- dead.
 
 `store.unrealized_justifications[block_root]`: if the epoch is 102, then to consider all the branches from the epoch 100 and pass `voting_source.epoch + 2 >= current_epoch` we use unrealized checkpoint.
-What happens WITHOUT `unrealized justifications`?
-When the last block was minted in Epoch 100, the Epoch 100 boundary hadn't been crossed yet. Therefore,
+
+So,
+
+WITHOUT `unrealized justifications`:
+- When the last block was minted in Epoch 100, the Epoch 100 boundary hadn't been crossed yet. Therefore,
 1. its official state.current_justified_checkpoint is still stuck at Epoch 99.
 2. If the consensus client relies on this official state, the branch scores a 99.
 3. 99 + 2 is 101, which is NOT greater than or equal to 102.
-Result: The client unfairly deletes a perfectly viable branch.
+- Result: The client unfairly deletes a perfectly viable branch.
 
-What happens WITH `unrealized justifications`?
-When that Epoch 100 block was processed, the client noticed: "Hey, this block contains enough attestations to justify Epoch 100, even though the state hasn't updated yet." 
+WITH `unrealized justifications`:
+- When that Epoch 100 block was processed, the client noticed: "Hey, this block contains enough attestations to justify Epoch 100, even though the state hasn't updated yet." 
 1. It saved this as the `unrealized_justification`.
 2. Now, in Epoch 102, the client "pulls up" the voting source from the stale state (99) to the unrealized justification (100).
 3. 100 + 2 is 102, which IS greater than or equal to 102.
-Result: The branch passes the viability check and survives in the fork choice algorithm and a new block can finally be proposed on it. Or it will be removed from the algorithm and memory in the next epoch.
+- Result: The branch passes the viability check and survives in the fork choice algorithm and a new block can finally be proposed on it. Or it will be removed from the algorithm and memory in the next epoch.
 
 
 ```python

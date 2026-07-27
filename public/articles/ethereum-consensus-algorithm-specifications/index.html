@@ -2216,23 +2216,32 @@ The logic is, if lots of validators were found malicious within 36 days, 18 days
     <button class="show-more-btn" onclick="toggleCodeBlock(this)" type="button">Show More</button>
 </div><p>We go bottom-up and check that the block build on the justified blocks at that time, and current finilized blocks.</p>
 <p><code>voting_source.epoch + 2 &gt;= current_epoch</code>: you have to declare a branch dead at some point to remove it from your memory and the algorithm. If a branch couldn&rsquo;t justify a block for 2 epochs &ndash; dead.</p>
-<p><code>store.unrealized_justifications[block_root]</code>: if the epoch is 102, then to consider all the branches from the epoch 100 and pass <code>voting_source.epoch + 2 &gt;= current_epoch</code> we use unrealized checkpoint.
-What happens WITHOUT <code>unrealized justifications</code>?
-When the last block was minted in Epoch 100, the Epoch 100 boundary hadn&rsquo;t been crossed yet. Therefore,</p>
+<p><code>store.unrealized_justifications[block_root]</code>: if the epoch is 102, then to consider all the branches from the epoch 100 and pass <code>voting_source.epoch + 2 &gt;= current_epoch</code> we use unrealized checkpoint.</p>
+<p>So,</p>
+<p>WITHOUT <code>unrealized justifications</code>:</p>
+<ul>
+<li>When the last block was minted in Epoch 100, the Epoch 100 boundary hadn&rsquo;t been crossed yet. Therefore,</li>
+</ul>
 <ol>
 <li>its official state.current_justified_checkpoint is still stuck at Epoch 99.</li>
 <li>If the consensus client relies on this official state, the branch scores a 99.</li>
-<li>99 + 2 is 101, which is NOT greater than or equal to 102.
-Result: The client unfairly deletes a perfectly viable branch.</li>
+<li>99 + 2 is 101, which is NOT greater than or equal to 102.</li>
 </ol>
-<p>What happens WITH <code>unrealized justifications</code>?
-When that Epoch 100 block was processed, the client noticed: &ldquo;Hey, this block contains enough attestations to justify Epoch 100, even though the state hasn&rsquo;t updated yet.&rdquo;</p>
+<ul>
+<li>Result: The client unfairly deletes a perfectly viable branch.</li>
+</ul>
+<p>WITH <code>unrealized justifications</code>:</p>
+<ul>
+<li>When that Epoch 100 block was processed, the client noticed: &ldquo;Hey, this block contains enough attestations to justify Epoch 100, even though the state hasn&rsquo;t updated yet.&rdquo;</li>
+</ul>
 <ol>
 <li>It saved this as the <code>unrealized_justification</code>.</li>
 <li>Now, in Epoch 102, the client &ldquo;pulls up&rdquo; the voting source from the stale state (99) to the unrealized justification (100).</li>
-<li>100 + 2 is 102, which IS greater than or equal to 102.
-Result: The branch passes the viability check and survives in the fork choice algorithm and a new block can finally be proposed on it. Or it will be removed from the algorithm and memory in the next epoch.</li>
+<li>100 + 2 is 102, which IS greater than or equal to 102.</li>
 </ol>
+<ul>
+<li>Result: The branch passes the viability check and survives in the fork choice algorithm and a new block can finally be proposed on it. Or it will be removed from the algorithm and memory in the next epoch.</li>
+</ul>
 <div class="code-block-wrapper collapsible-code">
     <div class="code-block-content">
         
