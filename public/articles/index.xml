@@ -10,15 +10,15 @@
 		
 		
 		
-			<lastBuildDate>Mon, 08 Jun 2026 08:00:00 +0400</lastBuildDate>
+			<lastBuildDate>Thu, 23 Jul 2026 08:00:00 +0000</lastBuildDate>
 		
 			<atom:link href="http://localhost:1313/articles/index.xml" rel="self" type="application/rss+xml" />
 			<item>
-				<title>EIPs</title>
-				<link>http://localhost:1313/articles/eips-and-conventions/</link>
-				<pubDate>Mon, 08 Jun 2026 08:00:00 +0400</pubDate>
-				<guid>http://localhost:1313/articles/eips-and-conventions/</guid>
-				<description>&lt;h3 id=&#34;address-and-the-checksum&#34;&gt;Address and the Checksum&lt;/h3&gt;&#xA;&lt;p&gt;&lt;strong&gt;Ethereum Addresses&lt;/strong&gt;&#xA;Ethereum addresses are unique identifiers that are derived from public keys&lt;/p&gt;&#xA;&lt;div class=&#34;code-block-wrapper collapsible-code&#34;&gt;&#xA;    &lt;div class=&#34;code-block-content&#34;&gt;&#xA;        &#xA;        &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;keccak256(&amp;lt;public key&amp;gt;) = 2a5bc342ed616b5ba5732269001d3f1ef827552ae1114027bd3ecf1f086ba0f9&#xA;Address: 001d3f1ef827552ae1114027bd3ecf1f086ba0f9 (last 20 bytes)&lt;/code&gt;&lt;/pre&gt;&#xA;    &lt;/div&gt;&#xA;    &lt;button class=&#34;show-more-btn&#34; onclick=&#34;toggleCodeBlock(this)&#34; type=&#34;button&#34;&gt;Show More&lt;/button&gt;&#xA;&lt;/div&gt;&lt;p&gt;Most often you will see the address with the prefix 0x that indicates it&amp;rsquo;s hexadecimal-encoded.&lt;/p&gt;&#xA;&lt;p&gt;Addresses for contracts derived with CREATE (older, much less used and less flexible opcode) or CREATE2 (allows users to send funds to a contract address even before it has been initialized on-chain, or to deploy identical contracts across different EVM-compatible blockchains at the exact same address, or to compute the address right in the code, which removes the need to be provided during the call of a function)&lt;/p&gt;</description>
+				<title>Hyperliquid: Everything There Is To Know</title>
+				<link>http://localhost:1313/articles/hyperliquid/</link>
+				<pubDate>Thu, 23 Jul 2026 08:00:00 +0000</pubDate>
+				<guid>http://localhost:1313/articles/hyperliquid/</guid>
+				<description>&lt;p&gt;The docs: &lt;a href=&#34;https://hyperliquid.gitbook.io/hyperliquid-docs&#34;&gt;https://hyperliquid.gitbook.io/hyperliquid-docs&lt;/a&gt;&#xA;Here is and will be updated once any new information is out the currently useful technical details of the Hyperliquid&amp;rsquo;s features and non-trading decision.&#xA;List of incidents: &lt;a href=&#34;https://hyperliquid-co.gitbook.io/wiki/introduction/roadmap/incident&#34;&gt;https://hyperliquid-co.gitbook.io/wiki/introduction/roadmap/incident&lt;/a&gt;&lt;/p&gt;&#xA;&lt;h3 id=&#34;hypercore&#34;&gt;HyperCore&lt;/h3&gt;&#xA;&lt;p&gt;Implementation of all the needed exchange primitives.&lt;/p&gt;&#xA;&lt;h4 id=&#34;order-book&#34;&gt;Order Book&lt;/h4&gt;&#xA;&lt;p&gt;HyperCore state includes an order book for each asset. The order book works similarly to that of centralized exchanges. Orders are added where price is an integer multiple of the tick size, and size is an integer multiple of lot size (i.e. strict rules for book records; for example, either 0.01 or 0.02, 2 records instead of scattering liquidity between the 2 prices, 0.00101, 0.00103 and so on). Orders are matched in price-time priority.&lt;/p&gt;</description>
 			</item>
 			<item>
 				<title>Ethereum Consensus Algorithm Specifications (upd. up to 30 June 2026)</title>
@@ -40,13 +40,6 @@
 				<pubDate>Thu, 01 Aug 2024 08:00:00 +0400</pubDate>
 				<guid>http://localhost:1313/articles/bitcoin/</guid>
 				<description>&lt;p&gt;This article includes most of the information about Bitcoin. Rules, updates, features, Script language - everything you will encounter if you wish to more seriously engage with the Bitcoin network. Digging deeper would be reading the code and BIPs itself.&lt;/p&gt;&#xA;&lt;p&gt;This article describes a slightly older version of Bitcoin to help you see a bit bigger picture. Knowledge of  (e.g. SegWit, Taproot) can be easily laid on top of the knowledge in this article.&lt;/p&gt;</description>
-			</item>
-			<item>
-				<title>Blockchain: An Inevitable Step Forward</title>
-				<link>http://localhost:1313/articles/blockchain/</link>
-				<pubDate>Thu, 01 Aug 2024 08:00:00 +0400</pubDate>
-				<guid>http://localhost:1313/articles/blockchain/</guid>
-				<description>&lt;h3 id=&#34;a-very-old-article-archived&#34;&gt;A VERY OLD ARTICLE. ARCHIVED.&lt;/h3&gt;&#xA;&lt;p&gt;There are numerous companies and institutions whose sole purpose is to affirm that you own something. Whether it&amp;rsquo;s proving ownership of property, verifying document authenticity, ensuring the legitimacy of financial transactions, or confirming intellectual property rights, these entities play a critical role in modern society. However, their methodologies are often slow, susceptible to errors, lack transparency, and are single points of failure. Most importantly, these entities struggle with gaining universal trust because human beings, who are prone to error, manipulation, bias, and having a bad day, maintain the integrity of the data.&lt;/p&gt;</description>
 			</item>
 	</channel>
 </rss>
